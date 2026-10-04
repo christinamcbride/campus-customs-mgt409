@@ -163,3 +163,26 @@ own 13-problem structure.
 look at the database `data/campus_customs.db` and understand the fields in each table. at a minimum, understand the `catalogue`, `inventory`, and `users` tables. start a file called `output/harness.md` and write down each table and its fields. for each field, include one short sentence explaining why it matters for the shop or the chatbot. we will keep adding to this harness file in later problems. it will eventually include models, tools, safety rules, and specifications.
 ```
 
+---
+
+## Problem 3 — Build the Campus Customs Website
+
+**Prompt 1 (initial):**
+
+```
+problem 3: build the campus customs website
+build a react + vite + typescript frontend for campus customs.
+add a navigation bar at the top with links to these main pages:
+
+* home
+* products
+* about us
+* log in
+* create account
+
+use wording inspired by [yalebulldogblue.com](https://yalebulldogblue.com/) for the home and about us pages, but write the content in your own voice. do not copy the original site's text.
+on the products page, show product images from the catalogue. use the image paths stored in the database. include basic product information such as the name, price, and a short description. each product should open to its own single-item page. show a large image on one side and the full product information on the other, including the description, price, and sizes or stock when that information is available. clicking a product card on the products page should take the shopper to its individual page.
+add a chat interface in the bottom-right corner of the site. a floating chat panel is fine. it does not need to connect to the agent yet. for now, a basic placeholder that will call the backend later is enough.
+you will need a small api soon to read the database. it is okay to start a simple fastapi app in `backend/main.py` that serves products and images. this will later grow into the agent backend in problem 5.
+```
+

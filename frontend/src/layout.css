@@ -1,0 +1,64 @@
+/* Shared layout: page sections, product grid, cards. */
+
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }
+
+.section { padding-top: 48px; padding-bottom: 48px; }
+.muted { color: var(--ink-muted); }
+.eyebrow {
+  text-transform: uppercase; letter-spacing: .14em;
+  font-size: .76rem; font-weight: 600; color: var(--brass-500); margin-bottom: 12px;
+}
+
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.section-head h2 { margin: 0; }
+.section-head a { font-weight: 600; font-size: .94rem; text-decoration: none; }
+.section-head a:hover { text-decoration: underline; }
+
+/* ---- Product grid ---- */
+.grid {
+  display: grid; gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+}
+.card-skeleton { aspect-ratio: 3 / 4; border-radius: var(--radius-lg); }
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--cream-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--navy-300); }
+.card:focus-within { box-shadow: var(--focus-ring); }
+.card-link { display: block; color: inherit; text-decoration: none; height: 100%; }
+.card-link:focus-visible { box-shadow: none; }
+
+.card-media { position: relative; background: var(--cream-100); aspect-ratio: 1 / 1; }
+.card-media img { width: 100%; height: 100%; object-fit: cover; }
+.badge {
+  position: absolute; top: 10px; left: 10px;
+  font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 999px;
+}
+.badge-out { background: var(--navy-900); color: var(--white); }
+
+.card-body { padding: 15px 16px 18px; }
+.card-cat {
+  font-size: .71rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--brass-600); font-weight: 700;
+}
+.card-title { font-size: 1.02rem; margin: 5px 0 7px; line-height: 1.25; }
+.card-desc { font-size: .87rem; color: var(--ink-muted); margin: 0 0 14px; line-height: 1.5; }
+.card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-price { font-family: var(--font-display); font-size: 1.13rem; font-weight: 600; color: var(--navy-900); }
+.card-cta { font-size: .83rem; color: var(--navy-600); font-weight: 600; opacity: 0; transition: opacity .16s ease; }
+.card:hover .card-cta, .card:focus-within .card-cta { opacity: 1; }
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+  .card-cta { display: none; }
+}

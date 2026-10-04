@@ -185,4 +185,67 @@ Floating point, so money should be rounded for display rather than printed raw.
 
 ---
 
-*Last updated: Problem 2 — database analysis.*
+---
+
+## 8. Application Shape (Problem 3)
+
+### Services
+
+| Service | Port | Entry point |
+|---|---:|---|
+| FastAPI backend | 8787 | `backend/main.py` (re-exports `backend/app/main.py`) |
+| Vite + React frontend | 5174 | `frontend/` |
+
+Ports 8000 and 5173 are occupied by another project on the development machine,
+hence 8787/5174. Vite proxies `/api` to the backend, so the frontend stays
+origin-relative and image URLs returned by the API work unchanged.
+
+### API surface so far
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/health` | Reports whether the database, images and AI key are present |
+| `GET /api/products` | List with `search`, `category`, `min_price`, `max_price`, `in_stock_only`, `limit`, `offset` |
+| `GET /api/products/{product_id}` | One product plus per-size stock |
+| `GET /api/categories` | Normalized categories and the real price range |
+| `GET /api/images/{filename}` | Serves `data/products/`, path-traversal guarded |
+
+### Routes
+
+`/` home · `/products` catalogue · `/products/:productId` single item ·
+`/about` · `/login` · `/create-account` · `*` not found.
+
+### Design system
+
+Original palette, not copied from the reference site: deep navy (`--navy-900`
+`#0b1f3a`) for chrome, paper cream (`--cream-50` `#fbf9f4`) for page ground, and a
+brass accent (`--brass-500` `#b08d35`) for rules, active states, and the primary
+call to action. Display type is an old-style serif for collegiate feel; body text is
+the system sans stack. No webfont is loaded, so the site renders identically offline.
+
+### Decisions worth carrying forward
+
+- **Product cards link to detail pages by `product_id`**, the same key the chatbot
+  uses, so an assistant reply can deep-link to a product with no extra mapping.
+- **Sold-out sizes render disabled and struck through**, with screen-reader text
+  spelling out "sold out" — the visual honesty requirement has a text equivalent.
+- **The chat widget is a placeholder** that states it is not connected. Its message
+  state, history and accessibility behaviour are already in place; Problem 5 swaps
+  the fake reply for a call to the agent endpoint.
+- **Auth forms validate locally only** and say so. Wired up in a later problem.
+
+### Bugs found and fixed during Problem 3
+
+1. **SQLite cross-thread error.** FastAPI runs sync endpoints in a threadpool and
+   could close a connection on a different thread than the one that opened it,
+   producing intermittent 500s under concurrent requests. Sequential `curl` tests
+   never triggered it; the browser loading several endpoints at once did. Fixed with
+   `check_same_thread=False`; each request still gets its own connection.
+2. **Aborted requests clobbering good state.** React StrictMode runs effects twice;
+   the first run's abort landed in `.catch` and overwrote data the second run had
+   already fetched, so the category filters rendered empty. Aborts are now ignored.
+3. **`inert=""`** on the closed chat panel — React 19 wants a real boolean.
+
+---
+
+*Last updated: Problem 3 — website build.*

@@ -46,7 +46,10 @@ def connect() -> Iterator[sqlite3.Connection]:
             f"Database not found at {path}. The assignment data folder "
             "(data/campus_customs.db) is required and is not committed to git."
         )
-    conn = sqlite3.connect(path)
+    # FastAPI runs sync endpoints in a threadpool and may close a dependency on a
+    # different thread than the one that opened it, so the same-thread check has
+    # to be off. Each request still gets its own connection; none are shared.
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     try:
