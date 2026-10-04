@@ -7,8 +7,8 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# backend/app/config.py -> backend/app -> backend -> project root
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# backend/config.py -> backend -> project root
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BACKEND_DIR = PROJECT_ROOT / "backend"
 
 

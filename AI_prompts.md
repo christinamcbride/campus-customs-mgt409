@@ -216,3 +216,29 @@ confirm that you can log in as this test user and that a brand-new account you c
 update `output/harness.md` with an explanation of how authentication works including what information is stored for a user and how passwords are protected.
 ```
 
+---
+
+## Problem 5 — PydanticAI Agent Backend
+
+**Prompt 1 (initial):**
+
+````
+problem 5: pydanticai agent backend
+build the shop chatbot as a pydanticai agent behind fastapi, and connect it to the chat widget in the frontend.
+put the api app in `backend/main.py`. this is the file you will run with uvicorn. keep the agent code in these files:
+
+* `backend/prompts/prompt.md` — the system prompt. you will expand this file later.
+* `backend/agent.py` — the agent entry point and wiring
+* `backend/tools.py` — the tools the agent can call
+* `backend/models.py` — pydantic and pydanticai structured types
+
+in `main.py`, add a chat route so that a message from the website returns a reply from the agent. also add any other routes you need for products and authentication.
+you will need an ai model api key for the agent.
+put the campus customs voice and basic safety rules into `prompts/prompt.md`. you will expand the tools and safety rules later. add or update the types in `models.py` for chat replies and product cards as needed.
+in `output/harness.md`, explain how the frontend communicates with fastapi and how the agent is loaded, including the prompt file and the model. make sure the backend runs from the `backend/` folder with this command:
+
+```
+uvicorn main:app --reload --port 8000
+```
+````
+

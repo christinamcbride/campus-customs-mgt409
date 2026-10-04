@@ -5,9 +5,9 @@ import sqlite3
 from fastapi import APIRouter, Depends, HTTPException, Query, Path as PathParam
 from fastapi.responses import FileResponse
 
-from .. import db
-from ..config import get_settings
-from ..schemas import CategoryList, ProductDetail, ProductPage
+import db
+from config import get_settings
+from schemas import CategoryList, ProductDetail, ProductPage
 
 router = APIRouter(prefix="/api", tags=["catalogue"])
 

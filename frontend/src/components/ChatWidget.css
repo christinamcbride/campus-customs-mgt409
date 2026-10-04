@@ -80,3 +80,31 @@
   .chat-panel { right: 10px; left: 10px; width: auto; bottom: 86px; }
   .chat-launcher { right: 14px; bottom: 14px; }
 }
+
+.chat-turn { display: flex; flex-direction: column; gap: 8px; }
+.bubble-p { margin: 0 0 .5em; }
+.bubble-p:last-child { margin-bottom: 0; }
+.bubble-list { margin: .3em 0; padding-left: 1.1em; }
+.bubble-list li { margin-bottom: .25em; }
+.bubble-failed {
+  background: var(--danger-50); border-color: #f0cfcd; color: var(--danger-700);
+}
+
+.chat-products { display: grid; gap: 6px; align-self: stretch; }
+.chat-product {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px; background: var(--white); text-decoration: none;
+  border: 1px solid var(--cream-200); border-radius: var(--radius-md);
+  transition: border-color .14s ease, background-color .14s ease;
+}
+.chat-product:hover { border-color: var(--navy-300); background: var(--navy-100); }
+.chat-product img {
+  width: 44px; height: 44px; object-fit: cover; flex: none;
+  border-radius: var(--radius-sm); background: var(--cream-100);
+}
+.chat-product-info { display: flex; flex-direction: column; min-width: 0; }
+.chat-product-name {
+  font-size: .85rem; font-weight: 600; color: var(--navy-900);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chat-product-price { font-size: .82rem; color: var(--ink-muted); }

@@ -8,9 +8,10 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
-from .. import db, security
-from ..config import Settings, get_settings
-from ..schemas import LoginRequest, RegisterRequest, User
+import db
+import security
+from config import Settings, get_settings
+from schemas import LoginRequest, RegisterRequest, User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

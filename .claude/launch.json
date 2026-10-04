@@ -3,16 +3,17 @@
   "configurations": [
     {
       "name": "campus-customs-backend",
-      "runtimeExecutable": ".venv/bin/python",
+      "runtimeExecutable": "../.venv/bin/python",
       "runtimeArgs": [
         "-m",
         "uvicorn",
-        "backend.app.main:app",
+        "main:app",
         "--reload",
         "--port",
-        "8787"
+        "8000"
       ],
-      "port": 8787
+      "port": 8000,
+      "cwd": "backend"
     },
     {
       "name": "campus-customs-frontend",

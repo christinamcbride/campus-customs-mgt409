@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
 
-from .config import get_settings
+from config import get_settings
 
 SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"]
 

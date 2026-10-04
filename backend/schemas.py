@@ -45,7 +45,7 @@ class CategoryList(BaseModel):
 
 from pydantic import EmailStr, field_validator  # noqa: E402
 
-from .security import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH  # noqa: E402
+from security import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH  # noqa: E402
 
 
 class User(BaseModel):

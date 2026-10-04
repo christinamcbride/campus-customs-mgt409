@@ -1,5 +1,7 @@
 import type {
   CategoryList,
+  ChatHistoryMessage,
+  ChatReply,
   ProductDetail,
   ProductPage,
   RegisterInput,
@@ -130,4 +132,19 @@ export function logout() {
 
 export function fetchMe(signal?: AbortSignal) {
   return request<User>('/api/auth/me', { signal })
+}
+
+// ---- Shopping assistant ----
+
+export function sendChatMessage(message: string, signal?: AbortSignal) {
+  return request<ChatReply>('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+    signal,
+  })
+}
+
+export function fetchChatHistory(signal?: AbortSignal) {
+  return request<ChatHistoryMessage[]>('/api/chat/history', { signal })
 }

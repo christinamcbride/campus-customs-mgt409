@@ -50,3 +50,16 @@ export interface RegisterInput {
   password: string
   confirm_password: string
 }
+
+export interface ChatReply {
+  reply: string
+  products: Product[]
+}
+
+export interface ChatHistoryMessage {
+  id: number
+  role: 'user' | 'assistant'
+  content: string
+  products: Product[]
+  created_at: string
+}
