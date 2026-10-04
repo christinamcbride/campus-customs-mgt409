@@ -156,7 +156,7 @@ async def chat(
         _save_message(conn, user["id"], "user", message)
         _save_message(conn, user["id"], "assistant", reply, products)
 
-    return ChatResponse(reply=reply, products=products)
+    return ChatResponse(reply=reply, products=products, matched_for=deps.last_query)
 
 
 @chat_router.get("/history", response_model=list[ChatMessage])

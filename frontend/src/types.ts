@@ -54,6 +54,7 @@ export interface RegisterInput {
 export interface ChatReply {
   reply: string
   products: Product[]
+  matched_for: string | null
 }
 
 export interface ChatHistoryMessage {

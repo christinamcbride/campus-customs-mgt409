@@ -655,4 +655,136 @@ payload and name the upstream provider.
 
 ---
 
-*Last updated: Problem 6 — verified against the live model.*
+---
+
+## 13. Chat Search That Updates the Page (Problem 7)
+
+### The API contract
+
+`POST /api/chat` returns exactly three fields:
+
+```jsonc
+{
+  "reply": "We have **27 hoodies**… I've put them on the page.",
+  "matched_for": "hoodies",        // label for the results, null if no search
+  "products": [                      // the cards the page renders
+    {
+      "product_id": "basic-hoodie-big-yale",   // → /products/<product_id>
+      "name": "Basic Hoodie Big Yale",
+      "price": 68.0,
+      "image_url": "/api/images/basic-hoodie-big-yale.jpg",
+      "description": "Navy pullover hoodie with a front kangaroo pocket…",
+      "category": "Hoodies",
+      "colors": ["navy blue", "white"],
+      "total_stock": 60,
+      "description_available": true
+    }
+  ]
+}
+```
+
+`products` carries everything a card needs — **image, name, price and short
+description** — plus the `product_id` the detail link is built from. No second
+request is needed to render results.
+
+### How a search reaches the page
+
+```
+shopper types in the chat panel
+        │
+        ▼
+POST /api/chat  ──▶  agent.run(message, deps=ShopContext)
+                          │
+                          ▼
+                   search_products  ──▶  SQLite
+                          │
+                          ├─ ctx.deps.remember(cards)      ← what was retrieved
+                          └─ ctx.deps.last_query = "hoodies"
+                          ▼
+        ChatResponse { reply, products, matched_for }
+        │
+        ▼
+ChatWidget.send()  ──▶  publish(res.products, res.matched_for)
+        │
+        ▼
+ChatResultsProvider  (React context, app-wide)
+        │
+        ▼
+<ChatResults />  renders <ProductCard> for each match
+        │
+        ▼
+click a card  ──▶  /products/<product_id>  ──▶  detail view
+```
+
+**The products are collected by the tools, not parsed out of the reply text.**
+Every tool appends what it retrieved to `ShopContext.shown_products`. The page
+therefore shows exactly what the agent looked up: it cannot display an item the
+agent only mentioned, and cannot omit one the agent relied on.
+
+### Frontend pieces
+
+| File | Role |
+|---|---|
+| `src/chatResults.tsx` | React context holding the latest matches and their label |
+| `src/components/ChatResults.tsx` | The on-page results band |
+| `src/components/ProductCard.tsx` | **The same card component the catalogue grid uses** |
+| `src/components/ChatWidget.tsx` | Publishes each reply's matches to the context |
+
+`<ChatResults />` sits at the top of `<main>` in `App.tsx`, so results appear on
+whatever page the shopper is on — Home, About, a product page — and survive
+in-app navigation. A "Clear results" button dismisses the band.
+
+Reusing `ProductCard` is the reason **every card behaves identically whether it
+came from browsing or from chat**: same image, name, price, truncated
+description, same `<Link to={/products/:id}>`. There is no separate chat-card
+code path that could drift from the catalogue's.
+
+A reply that retrieved nothing does **not** clear the band — the previous
+results stay put rather than the page going blank mid-conversation.
+
+### Prompt change
+
+`prompts/prompt.md` now tells the agent its search results are displayed as
+cards beside the conversation, so it should **not** recite every product in
+prose. It names two or three, says how many there are in total, and refers to
+the cards ("I've put them on the page"). It is also told never to describe a
+product that is not among its results, and not to refer to cards when a search
+returned nothing.
+
+### Problem 3 single-item page
+
+Unchanged and re-verified after the addition. The catalogue grid still shows
+102 products across 7 category chips, and a card click still opens the detail
+view with the large image, full description, specs and per-size stock. A card
+added through chat opens that same view — confirmed by clicking one and
+landing on `/products/basic-hoodie-big-yale` with a 477px image and stock
+matching the database row for row.
+
+### Bug found and fixed during Problem 7
+
+**Plural searches returned nothing.** `"hoodies"` matched **0** products while
+`"hoodie"` matched 27, because the `LIKE` search had no stemming and no
+catalogue row contains the plural. The live agent hit this immediately and
+answered "We don't currently carry hoodies" — confidently wrong, about the
+shop's second-largest category. This predates Problem 7; it affected the
+catalogue search box too.
+
+`db.term_variants()` now tries singular and plural forms of each word
+(`-ies → -y`, `-es`, `-s`, and the reverse), with every term still required to
+match somewhere:
+
+| Query | Before | After |
+|---|---|---|
+| `hoodies` | 0 | 27 |
+| `t-shirts` | 0 | 25 |
+| `crewnecks` | 0 | 29 |
+| `navy hoodies` | 0 | 25 |
+| `gym shorts` | 0 | 0 |
+| `handsome dan` | 0 | 0 |
+
+The last two matter as much as the first four: the fix adds no false positives,
+so honest "we don't carry that" answers still happen.
+
+---
+
+*Last updated: Problem 7 — chat search that updates the page.*

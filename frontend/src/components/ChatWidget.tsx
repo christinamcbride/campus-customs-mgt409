@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ApiError, fetchChatHistory, formatPrice, sendChatMessage } from '../api'
 import { useAuth } from '../auth'
+import { useChatResults } from '../chatResults'
 import type { Product } from '../types'
 import './ChatWidget.css'
 
@@ -92,6 +93,7 @@ function ProductStrip({ products }: { products: Product[] }) {
 
 export default function ChatWidget() {
   const { user } = useAuth()
+  const { publish } = useChatResults()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<Message[]>([GREETING])
@@ -163,6 +165,8 @@ export default function ChatWidget() {
       setPending(true)
       try {
         const res = await sendChatMessage(text)
+        // Hand the matches to the page so they render as full product cards.
+        publish(res.products, res.matched_for)
         setMessages((m) => [
           ...m,
           {
@@ -189,7 +193,7 @@ export default function ChatWidget() {
         setPending(false)
       }
     },
-    [],
+    [publish],
   )
 
   function submit(e: React.FormEvent) {

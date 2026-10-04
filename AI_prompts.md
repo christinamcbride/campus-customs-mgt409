@@ -261,3 +261,24 @@ the tools should be able to find:
 the agent must use the database as its source of truth. it should never invent prices or quantities. if a size is out of stock, it should say so clearly. expand `prompts/prompt.md` so the agent knows to call these tools when answering questions about prices and stock. add or update the return types in `models.py`. in `output/harness.md`, list each tool and explain which model fields you chose for the lookup results and why.please inspect the existing implementation first, make only the changes needed for this problem, test the tools through the chat endpoint, and tell me what you changed.
 ```
 
+---
+
+## Problem 7 — Chat Search That Updates the Page
+
+**Prompt 1 (initial):**
+
+```
+problem 7: chat search that updates the page 
+add a feature that lets the chatbot search for products based on what the customer asks.
+for example, if a customer asks, "what hoodies do you have?", the agent should search the catalogue and return matching products.
+the website should dynamically display the matching products as product cards. each card should include:
+
+* product image
+* product name
+* price
+* short product information
+
+this should work as an api contract: the agent returns structured product matches, and the frontend renders those matches on the page.
+make sure the single-item page from problem 3 still works after adding the dynamic product cards. every product card, including cards added to the page through chat, should open the product's detail view when clicked. the detail view should include the large product image and full product information. update `prompts/prompt.md` and `output/harness.md` so it is clear how search results move from the agent to the frontend and appear on the page.
+```
+

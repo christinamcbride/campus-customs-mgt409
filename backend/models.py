@@ -164,10 +164,23 @@ class ChatMessage(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    """The agent's reply plus any products the frontend should display."""
+    """The agent's reply plus the products the page should display.
+
+    This is the contract between the agent and the frontend. `products` holds
+    the cards the agent actually retrieved while answering — not what it
+    mentioned in prose — so the page cannot show an item the agent never looked
+    up, and cannot omit one it relied on.
+    """
 
     reply: str
     products: list[ProductCard] = Field(default_factory=list)
+    matched_for: str | None = Field(
+        default=None,
+        description=(
+            "The search phrase that produced these products, for labelling the "
+            "results on the page. Null when the reply involved no search."
+        ),
+    )
 
 
 # --------------------------------------------------------------------------
@@ -193,6 +206,7 @@ class ShopContext:
 
     def __post_init__(self) -> None:
         self.shown_products: list[ProductCard] = []
+        self.last_query: str | None = None
 
     def remember(self, products: list[ProductCard]) -> None:
         """Record products a tool returned, keeping first-seen order."""

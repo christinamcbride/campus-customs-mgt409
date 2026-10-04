@@ -153,6 +153,10 @@ def register_tools(agent) -> None:
 
         cards = [_card(r) for r in rows[:MAX_RESULTS]]
         ctx.deps.remember(cards)
+        if cards:
+            # Label for the results shown on the page. Prefer the shopper's own
+            # words; fall back to the filter when they only named a category.
+            ctx.deps.last_query = query.strip() or category or color or "your search"
 
         if not cards:
             tried = [f"query={query!r}"]

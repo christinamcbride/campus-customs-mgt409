@@ -101,6 +101,30 @@ _BASE_SELECT = """
 """
 
 
+def term_variants(term: str) -> list[str]:
+    """Forms of a search word to try, so plurals match singular catalogue text.
+
+    Shoppers type "hoodies", "t-shirts", "jerseys"; the catalogue stores
+    "hoodie", "t-shirt", "jersey". Without this, a natural plural query
+    returns nothing at all.
+    """
+    word = term.strip().lower()
+    if not word:
+        return []
+    forms = {word}
+    if len(word) > 3:
+        if word.endswith("ies"):
+            forms.add(word[:-3] + "y")
+        if word.endswith("es"):
+            forms.add(word[:-2])
+        if word.endswith("s"):
+            forms.add(word[:-1])
+        else:
+            # Also try the plural, for a singular query against plural text.
+            forms.add(word + "s")
+    return sorted(forms, key=len, reverse=True)
+
+
 def list_products(
     conn: sqlite3.Connection,
     *,
@@ -117,13 +141,24 @@ def list_products(
     params: list[Any] = []
 
     if search:
-        # Match the user's words against every text column, all terms required.
+        # Every term must match somewhere, but any of its singular/plural forms
+        # counts, so "hoodies" finds rows that only ever say "hoodie".
+        columns = (
+            "c.name",
+            "c.description",
+            "c.search_tags",
+            "c.colors",
+            "c.garment_type",
+        )
         for term in [t for t in search.split() if t][:6]:
-            where.append(
-                "(c.name LIKE ? OR c.description LIKE ? OR c.search_tags LIKE ?"
-                " OR c.colors LIKE ? OR c.garment_type LIKE ?)"
+            variants = term_variants(term)
+            if not variants:
+                continue
+            clause = " OR ".join(
+                f"{col} LIKE ?" for _ in variants for col in columns
             )
-            params.extend([f"%{term}%"] * 5)
+            where.append(f"({clause})")
+            params.extend(f"%{v}%" for v in variants for _ in columns)
     if min_price is not None:
         where.append("c.price >= ?")
         params.append(min_price)

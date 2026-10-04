@@ -1,0 +1,12 @@
+.chat-results {
+  background: var(--cream-100);
+  border-block: 1px solid var(--cream-200);
+  padding: 34px 0 40px;
+  scroll-margin-top: calc(var(--nav-height) + 12px);
+}
+.chat-results-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap; margin-bottom: 24px;
+}
+.chat-results-head h2 { margin: 0 0 6px; }
+.chat-results-count { margin: 0; font-size: .92rem; max-width: 52ch; }

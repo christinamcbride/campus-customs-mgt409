@@ -1,5 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth'
+import { ChatResultsProvider } from './chatResults'
+import ChatResults from './components/ChatResults'
 import NavBar from './components/NavBar'
 import Footer from './components/Footer'
 import ChatWidget from './components/ChatWidget'
@@ -15,9 +17,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ChatResultsProvider>
       <a className="sr-only skip-link" href="#main">Skip to main content</a>
       <NavBar />
       <main id="main">
+        <ChatResults />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
@@ -30,6 +34,7 @@ export default function App() {
       </main>
       <Footer />
       <ChatWidget />
+        </ChatResultsProvider>
       </AuthProvider>
     </BrowserRouter>
   )
