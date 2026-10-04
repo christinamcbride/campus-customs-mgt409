@@ -261,6 +261,27 @@ the tools should be able to find:
 the agent must use the database as its source of truth. it should never invent prices or quantities. if a size is out of stock, it should say so clearly. expand `prompts/prompt.md` so the agent knows to call these tools when answering questions about prices and stock. add or update the return types in `models.py`. in `output/harness.md`, list each tool and explain which model fields you chose for the lookup results and why.please inspect the existing implementation first, make only the changes needed for this problem, test the tools through the chat endpoint, and tell me what you changed.
 ```
 
+**Prompt 2 (follow-up):**
+
+```
+how do i add the key to the .env file? i can't open it on my mac
+```
+
+*Why I had to ask:* macOS has no default application for a `.env` file, so
+double-clicking it does nothing and the instruction to "paste your key into
+the file" was not actually actionable without being told to open it in
+TextEdit.
+
+**Prompt 3 (follow-up):**
+
+```
+okay done is it working?
+```
+
+*Why I had to ask:* nothing in the interface confirms whether a pasted key was
+picked up, so the only way to know was to have the assistant check and make a
+real model call.
+
 ---
 
 ## Problem 7 — Chat Search That Updates the Page
@@ -493,4 +514,111 @@ the agent itself consists of these four files under `backend/`:
 
 `readme.md` should explain how to run the frontend and backend after placing the local data pack in the project.
 ````
+
+### Follow-ups before the Problem 13 prompt
+
+These were asked while getting the repository working, ahead of the formal
+Problem 13 instructions. They belong to this problem because they are all
+about pushing the project to GitHub.
+
+**Prompt 2 (follow-up):**
+
+```
+how do i help fix the github remote?
+```
+
+*Why I had to ask:* the assistant had flagged that no git remote existed and
+that the `gh` CLI was not installed, but it could not authenticate as me, so I
+needed to know which part was mine to do.
+
+**Prompt 3 (follow-up):**
+
+```
+yes write the readme and push it. it should run off the local user's PORTKEY_API_KEY.env file. the graders for this assignment will already have their api keys with that name.
+```
+
+*Why I had to ask:* there was no README at all, and the assistant needed to be
+told that graders already hold a key under that exact filename so the setup
+instructions would match what they have.
+
+**Prompt 4 (follow-up):**
+
+```
+how do i push from my own terminal
+```
+
+*Why I had to ask:* I was told to run the push myself so the credential never
+passed through the assistant, but not how to actually open or use a terminal
+to do it.
+
+**Prompt 5 (follow-up):**
+
+```
+can u reset terminal
+```
+
+*Why I had to ask:* the first push attempt failed and the terminal looked
+stuck, so I wanted it cleared before trying again.
+
+**Prompt 6 (follow-up):**
+
+```
+ohhhhhh can i try again i did my github password
+```
+
+*Why I had to ask:* I had entered my GitHub account password instead of a
+personal access token, which GitHub stopped accepting for git operations in
+2021, so the push failed twice before I realised what was wrong.
+
+**Prompt 7 (follow-up):**
+
+```
+okay i hit return
+```
+
+*Why I had to ask:* the token prompt shows nothing when you paste into it, so
+I had no way to tell whether the push had succeeded without the assistant
+reading the terminal.
+
+### Follow-ups after the Problem 13 prompt
+
+**Prompt 8 (follow-up):**
+
+```
+how do i see a website it just looks like code on the github website like this:
+```
+
+*Why I had to ask:* the GitHub page shows source files rather than a running
+site, and nothing had explained that the application has to be run locally
+because GitHub cannot host a Python backend, a database and an API key.
+
+**Prompt 9 (follow-up):**
+
+```
+when i click to add something in my bag there's no bag, the button just clicks and does nothing. is this an issue?
+```
+
+*Why I had to ask:* the product page had an "Add size X to bag" button with no
+click handler at all, so it looked broken — a defect the assistant had left in
+and not flagged, even though a cart was never part of the assignment.
+
+**Prompt 10 (my choice when asked how to handle it):**
+
+```
+Build a real working bag
+```
+
+*Why I had to ask:* the assistant offered three options — honest feedback on
+click, a real bag, or removing the button — and the scope decision was mine to
+make.
+
+**Prompt 11 (follow-up):**
+
+```
+did u include all this follow up in prompts md as well as one sentence summarizing the follow up and why i had to ask it
+```
+
+*Why I had to ask:* the assistant had logged only the initial Problem 13
+prompt and silently skipped every follow-up in this section, so the log was
+incomplete until I checked.
 
