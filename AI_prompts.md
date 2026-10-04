@@ -1,12 +1,12 @@
 # AI Prompts Log — Campus Customs (MGT 409, HW4)
 
 A record of the prompts I typed while building the Campus Customs shopping site.
-Prompts are reproduced **word for word**, exactly as I typed them, including
-original spelling and punctuation. One section per problem.
+Prompts are reproduced **word for word**, exactly as I typed them, including original
+spelling and punctuation. One section per problem (13 problems total).
 
 ---
 
-## Problem 1 — Locating the assignment folder and confirming the data
+## Problem 1 — Vibe Coder Prompt
 
 **Prompt 1 (initial):**
 
@@ -14,21 +14,7 @@ original spelling and punctuation. One section per problem.
 We're going to work in the homework 4 folder in MGT 409 today on my desktop can you locate it?
 ```
 
-**Prompt 2 (follow-up):**
-
-```
-Do you see the data folder in HW4 now?
-```
-
-*What was lacking after the first prompt:* the HW4 folder was found but completely
-empty — no `data/` folder, no database, no product images — so there was nothing to
-build against until the assignment data was added and I asked it to look again.
-
----
-
-## Problem 2 — Project requirements and scope
-
-**Prompt 1 (initial):**
+**Prompt 2 — the main vibe coder prompt:**
 
 ```
 Campus Customs Project Instructions
@@ -114,38 +100,27 @@ At the end:
 * Do not commit `.env` files, API keys, or other secrets.
 * Provide the public repository URL.
 
-Do not claim that the project is finished until the application has been tested and the repository contents have been reviewed.
+Do not claim that the project is finished until the application has been tested and the repository contents have been reviewed. Do you see the data folder in HW4 now?
 ```
 
-**Follow-up (clarification I answered):** the assistant flagged a contradiction in my
-instructions — I said to use `PORTKEY_API_KEY` but also that we are not using Portkey
-or OpenAI — and asked what the agent should actually call at runtime. I selected:
+*What was lacking after the first prompt:* the HW4 folder was located but completely
+empty — no `data/` folder, no database, no product images — so there was nothing to
+build against. I added the assignment data and sent the full project brief, ending by
+asking it to check for the data folder again.
+
+**Prompt 3 (clarification I answered):** the assistant flagged a contradiction in my
+brief — I said to use `PORTKEY_API_KEY` but also that we are not using Portkey or
+OpenAI — and asked what the agent should actually call at runtime. I selected:
 
 ```
 Portkey gateway, OpenAI-compatible
 ```
 
-*What was lacking after the first prompt:* my instructions named the environment
-variable but not the actual provider or endpoint behind it, so the agent's model
-configuration was ambiguous and could not be written without guessing.
+*What was lacking:* my brief named the environment variable but not the provider or
+endpoint behind it, so the agent's model configuration was ambiguous and could not be
+written without guessing.
 
----
-
-## Problem 3 — Backend scaffold and catalogue API
-
-No new prompt was typed for this problem; it was carried out under the standing
-instructions in Problem 2 ("work on one problem at a time", smallest complete change,
-verify before reporting).
-
-Work completed: `.gitignore` excluding `data/` and secrets, FastAPI application,
-SQLite access layer, product listing/search/filter endpoints, per-size inventory
-lookup, and an image endpoint with a path-traversal guard.
-
----
-
-## Problem 4 — Prompt logging
-
-**Prompt 1 (initial):**
+**Prompt 4 (follow-up):**
 
 ```
 Create `AI_prompts.md` at the start of the assignment and keep it updated as you work. This file is the log of what i typed. I'll describe each problem to you  in my own words so please keep the phrasing word for word and exact. Put one section for each problem. Each section must include:
@@ -154,5 +129,27 @@ Create `AI_prompts.md` at the start of the assignment and keep it updated as you
 * At least one prompt you typed, in your own words as much as possible
 * One follow-up prompt if you needed it, along with one sentence explaining what was lacking after the first prompt
 ```
+
+*What was lacking:* my original brief did not mention the prompt log at all, which is
+a required deliverable for this assignment.
+
+**Prompt 5 (correction):**
+
+```
+no this was all for Problem 1: Vibe Coder Prompt, theres 13 problems so we'll move onto problem 2 next
+```
+
+*What was lacking:* the assistant had split my prompts into four separate problems of
+its own invention, when everything so far belonged to Problem 1 of the assignment's
+own 13-problem structure.
+
+### Work completed under Problem 1
+
+- `.gitignore` excluding `data/` (database and product images), `.env` files, virtual
+  environments and `node_modules`
+- FastAPI backend with settings loaded from `backend/.env`
+- SQLite access layer: product listing, search, filtering, and per-size inventory
+- Product image endpoint with a path-traversal guard
+- Dependencies pinned to releases that publish CPython 3.14 wheels
 
 ---
