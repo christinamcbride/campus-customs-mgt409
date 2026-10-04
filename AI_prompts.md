@@ -153,3 +153,13 @@ own 13-problem structure.
 - Dependencies pinned to releases that publish CPython 3.14 wheels
 
 ---
+
+## Problem 2 — Analyze the Database
+
+**Prompt 1 (initial):**
+
+```
+# problem 2: analyze the database
+look at the database `data/campus_customs.db` and understand the fields in each table. at a minimum, understand the `catalogue`, `inventory`, and `users` tables. start a file called `output/harness.md` and write down each table and its fields. for each field, include one short sentence explaining why it matters for the shop or the chatbot. we will keep adding to this harness file in later problems. it will eventually include models, tools, safety rules, and specifications.
+```
+

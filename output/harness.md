@@ -1,0 +1,188 @@
+# Campus Customs — Build Harness
+
+Living specification for the Campus Customs shopping site. Started at Problem 2
+(database analysis) and extended in later problems with models, tools, safety rules,
+and specifications.
+
+Source of truth: `data/campus_customs.db` (SQLite). This file is not committed to
+GitHub; it ships with the assignment.
+
+---
+
+## 1. Database Overview
+
+| Table | Rows | Purpose |
+|---|---:|---|
+| `catalogue` | 102 | One row per product — the shop's merchandise |
+| `inventory` | 612 | Stock count per product per size (102 × 6) |
+| `users` | 3 | Shopper accounts and password hashes |
+| `chat_messages` | 22 | Saved chat history, including worked example answers |
+
+No table is empty. There are **no indexes** beyond the automatic ones on the primary
+keys and unique constraints, which is fine at 102 products but worth knowing if
+queries ever get slower.
+
+---
+
+## 2. `catalogue` — the products
+
+One row per product. This is the only authority on what the shop sells and what it
+costs; the chatbot may never state a product or price that did not come from here.
+
+| Field | Type | Constraints | Why it matters |
+|---|---|---|---|
+| `product_id` | TEXT | **PK** | Stable slug (e.g. `morse-1-4-zip`) used to join inventory, build image URLs, and let the chatbot refer to an exact item without ambiguity. |
+| `name` | TEXT | NOT NULL | The human-readable title shown on cards and spoken by the chatbot. |
+| `garment_type` | TEXT | NOT NULL | Free-text garment description that drives category filtering — but it is inconsistent, so it must be normalized (see §6.1). |
+| `description` | TEXT | NOT NULL | Full sentence describing colour, cut and graphic; the chatbot's richest grounding text for "what does this look like" questions. |
+| `colors` | TEXT | NOT NULL | JSON array of colour names; lets the shop filter by colour and lets the chatbot answer "do you have this in pink?" honestly. |
+| `search_tags` | TEXT | NOT NULL | JSON array of 4–12 keywords (team, school, theme); the main hook for matching a shopper's natural phrasing to products. |
+| `image_file_path` | TEXT | NOT NULL | Relative path like `products/<id>.jpg` pointing into `data/products/`; the backend turns this into a served image URL. |
+| `price` | REAL | NOT NULL | Price in USD; must be read from here every time rather than remembered, so the chatbot never quotes a stale number. |
+
+**Price tiers** (7 distinct values, no nulls, no zeroes):
+
+| Price | Products | Typical garment |
+|---:|---:|---|
+| $32 | 25 | T-shirts |
+| $45 | 5 | Performance long-sleeve / lighter sweatshirts |
+| $58 | 28 | Crewneck sweatshirts |
+| $68 | 23 | Hoodies |
+| $72 | 11 | Quarter-zips |
+| $88 | 2 | Full-zip hooded sweatshirts |
+| $98 | 8 | Fleece and bomber jackets |
+
+---
+
+## 3. `inventory` — stock by size
+
+Exactly 6 rows per product (XS, S, M, L, XL, XXL) for all 102 products. This is the
+only authority on availability.
+
+| Field | Type | Constraints | Why it matters |
+|---|---|---|---|
+| `id` | INTEGER | **PK**, autoincrement | Internal row identifier; not shown to shoppers. |
+| `product_id` | TEXT | NOT NULL, FK → `catalogue` | Links stock to its product; every row resolves (no orphans). |
+| `size` | TEXT | NOT NULL, UNIQUE with `product_id` | The size label; the unique pair guarantees one stock row per product-size, so a size question has exactly one answer. |
+| `quantity` | INTEGER | NOT NULL | Units on hand; **0 means that size is sold out**, which the chatbot must say plainly instead of glossing over. |
+
+**Stock shape — this is the heart of the honesty requirement:**
+
+- Quantities run **0 to 25**, averaging 9.7. No negatives.
+- **145 of 612 size rows are zero** (23.7%).
+- **77 of 102 products have at least one sold-out size.**
+- **No product is sold out entirely** — so "is this available?" is almost always
+  "yes, in these sizes but not those." A yes/no answer is usually the wrong shape.
+- 58 rows are low stock (1–3 units).
+
+Worked example — Morse ¼ Zip: XS 15, S 2, M 8, **L 0 (sold out)**, XL 25, XXL 2.
+
+---
+
+## 4. `users` — accounts
+
+| Field | Type | Constraints | Why it matters |
+|---|---|---|---|
+| `id` | INTEGER | **PK**, autoincrement | Identifies the shopper; ties chat history to an account. |
+| `name` | TEXT | NOT NULL | Full display name; the chatbot greets the shopper by name when logged in. |
+| `email` | TEXT | NOT NULL, **UNIQUE** | The login identifier; uniqueness is enforced by the database, so duplicate registration must be caught and reported as a clean error. |
+| `password_hash` | TEXT | NOT NULL | Salted PBKDF2 hash — never a plaintext password, never returned by any endpoint. |
+| `created_at` | TEXT | NOT NULL, default `datetime('now')` | Account creation timestamp as `YYYY-MM-DD HH:MM:SS` UTC; the default means inserts can omit it. |
+| `first_name` | TEXT | nullable | Added after the original schema; used for a friendly first-name greeting. |
+| `last_name` | TEXT | nullable | Added after the original schema; completes the display name. |
+
+**Password hash format** — three `$`-separated segments:
+
+```
+pbkdf2_sha256$<salt>$<64-hex-char digest>
+```
+
+The digest is 64 hex characters, i.e. SHA-256. **The iteration count is not stored in
+the hash**, unlike Django's 4-segment format. Verifying the seeded accounts therefore
+depends on knowing the iteration count out of band; new accounts this app creates will
+record it explicitly. Resolved when auth is built.
+
+The three seeded accounts are Test User, Ada Lovelace, and Tauhid Zaman. The brief
+mentioned one test user; there are three. `name` always equals
+`first_name + ' ' + last_name`.
+
+---
+
+## 5. `chat_messages` — saved conversations
+
+Not mentioned in the brief, but present and **already populated with 22 real messages**
+(11 user, 11 assistant) across two accounts. These are effectively worked examples of
+the expected chatbot behaviour.
+
+| Field | Type | Constraints | Why it matters |
+|---|---|---|---|
+| `id` | INTEGER | **PK**, autoincrement | Orders messages within a conversation. |
+| `user_id` | INTEGER | NOT NULL, FK → `users` | Scopes history to one account, so a shopper only ever sees their own chat. |
+| `role` | TEXT | NOT NULL | Either `user` or `assistant`; drives both message styling and replay into the model. |
+| `content` | TEXT | NOT NULL | The message text, Markdown-formatted for assistant turns. |
+| `products_json` | TEXT | nullable | JSON array of the products shown alongside an assistant reply — this is the mechanism for "matching products appear on the page based on the conversation". Always null on user turns. |
+| `created_at` | TEXT | NOT NULL, default `datetime('now')` | Timestamp for chronological ordering. |
+
+`products_json` entries carry: `product_id`, `name`, `garment_type`, `description`,
+`colors`, `search_tags`, `image_file_path`, `image_url`, `price`, `inventory`,
+`total_stock`. Assistant turns attach either 0, 1, or 8 products — so the product panel
+must handle an empty result, a single focused item, and a multi-product grid.
+
+### What the stored examples establish
+
+- **Honest refusal is expected.** "I couldn't find any products matching 'gym shorts'"
+  and "I searched the current collection but couldn't find any items featuring
+  Handsome Dan" — no invented products, with a suggested alternative offered.
+- **Colour claims are checked.** "No—this Baseball Left Chest Crewneck is only
+  available in navy and white, not pink."
+- **Stock is reported by size.** "currently in stock in sizes S, M, L, and XXL."
+- **The shopper is addressed by name** when logged in.
+- **Tone is warm and brief**, Markdown-formatted, prices bolded (`**$68**`).
+
+---
+
+## 6. Data quirks the code must handle
+
+### 6.1 `garment_type` is inconsistent
+22 distinct raw values with overlapping and case-variant spellings — `short-sleeve
+T-shirt` vs `short-sleeve t-shirt`, and `hoodie` / `pullover hoodie` / `hooded
+sweatshirt` / `full-zip hooded sweatshirt`. Filtering on the raw column splits
+identical garments across buckets. **Decision:** normalize at query time into six
+categories — Quarter-Zips, Jackets, Hoodies, Crewnecks, Long Sleeve, T-Shirts — leaving
+the database untouched, since graders run their own copy.
+
+### 6.2 Colour names are inconsistent
+Across 22 distinct colour values, the same colour appears under several names:
+`navy blue` (62) and `navy` (18) coexist, and grey splits six ways — `heather gray`
+(41), `charcoal gray` (3), `gray` (3), `dark heather gray` (2), `heather charcoal gray`
+(1), `light gray` (1). A shopper asking for "grey" must match all six, so colour
+matching has to be substring- and case-insensitive or it will miss most of them.
+
+### 6.3 JSON is stored as TEXT
+`colors`, `search_tags` and `products_json` are TEXT holding JSON. All 102 rows parse
+cleanly, but parsing must still be defensive rather than assuming well-formed input.
+
+### 6.4 Image paths are uniform
+All 102 rows follow `products/<product_id>.jpg` exactly, and all 102 files exist. The
+path still has to be resolved safely — a filename from a request must never escape
+`data/products/`.
+
+### 6.5 Prices are `REAL`
+Floating point, so money should be rounded for display rather than printed raw.
+
+---
+
+## 7. Rules carried forward
+
+1. **The database is the only source of truth** for products, prices and stock. No
+   product, price, colour or size may be stated unless a query returned it.
+2. **Size questions get a per-size answer** — list what is available *and* what is
+   sold out, never a bare "yes".
+3. **"I don't know" is a correct answer.** If a search returns nothing, say so and
+   offer an alternative; never substitute a plausible-sounding product.
+4. **Never expose `password_hash`** or any secret through the API.
+5. **Never commit** `data/campus_customs.db`, `data/products/`, or `.env`.
+
+---
+
+*Last updated: Problem 2 — database analysis.*
