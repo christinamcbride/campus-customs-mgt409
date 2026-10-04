@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Campus Customs — App Check</title>
 <style>
-  /* Self-contained: no external fonts, scripts or stylesheets, so this page
+  /* Self-contained: no external fonts, scripts or stylesheets, so the page
      renders identically offline when opened by double-clicking. */
   :root {
     --ink: #10203a;
@@ -15,111 +15,89 @@
     --sheet: #fffdf8;
     --rule: #e4dac4;
     --brass: #7a5a14;
-    --pass-bg: #e6f0e9;
-    --pass-fg: #1f5f46;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--stock);
     color: var(--body);
-    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
-  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px 72px; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
 
   header {
     background: var(--ink);
-    color: var(--stock);
-    padding: 40px 0 34px;
+    padding: 34px 0 28px;
     border-bottom: 3px solid #a8812a;
-    margin-bottom: 40px;
+    margin-bottom: 36px;
   }
-  header .wrap { padding-bottom: 0; }
   h1 {
     font-family: "Iowan Old Style", Palatino, Georgia, serif;
-    font-size: clamp(1.9rem, 4vw, 2.7rem);
-    margin: 0 0 8px;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    margin: 0 0 6px;
     color: #fffdf8;
     letter-spacing: -0.02em;
   }
-  header p { margin: 0; color: #e8d9b0; font-size: 0.95rem; }
-  header dl {
-    display: flex; flex-wrap: wrap; gap: 26px;
-    margin: 22px 0 0; padding-top: 18px;
-    border-top: 1px solid rgba(246,241,230,0.2);
-  }
-  header dt {
-    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
-    color: rgba(246,241,230,0.6); margin-bottom: 2px;
-  }
-  header dd { margin: 0; font-size: 0.92rem; color: #fffdf8; }
+  header p { margin: 0; color: #e8d9b0; font-size: 0.92rem; }
 
+  /* Each check: heading, screenshot, explanation. Nothing between them. */
   section {
     background: var(--sheet);
     border: 1px solid var(--rule);
     border-radius: 4px;
-    padding: 26px;
-    margin-bottom: 30px;
+    padding: 24px;
+    margin-bottom: 28px;
   }
   h2 {
     font-family: "Iowan Old Style", Palatino, Georgia, serif;
-    font-size: 1.45rem;
+    font-size: 1.4rem;
     color: var(--ink);
-    margin: 0 0 6px;
+    margin: 0 0 16px;
     letter-spacing: -0.015em;
   }
-  .check-no {
-    display: inline-block;
-    font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+  h2 span {
+    display: block;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
     font-weight: 700; color: var(--brass);
-    margin-bottom: 10px;
+    margin-bottom: 7px;
   }
-  figure { margin: 20px 0 0; }
-  figure img {
+  img {
     display: block; width: 100%; height: auto;
     border: 1px solid var(--rule);
     border-radius: 3px;
-    background: var(--stock);
   }
-  figcaption {
-    margin-top: 12px;
-    font-size: 0.93rem;
+  .explains {
+    margin: 14px 0 0;
+    font-size: 0.97rem;
     color: var(--body);
-    border-left: 1px solid var(--rule);
-    padding-left: 14px;
-  }
-  .proves { font-weight: 600; color: var(--ink); }
-
-  .pass {
-    display: inline-block;
-    background: var(--pass-bg); color: var(--pass-fg);
-    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
-    font-weight: 700;
-    padding: 4px 10px; border-radius: 99px;
-    margin-left: 8px; vertical-align: 3px;
   }
 
+  details {
+    margin-top: 16px;
+    border-top: 1px solid var(--rule);
+    padding-top: 12px;
+  }
+  summary {
+    cursor: pointer;
+    font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  summary:hover { color: var(--ink); }
   table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 16px 0 0;
-    font-size: 0.88rem;
+    border-collapse: collapse; width: 100%;
+    margin-top: 12px; font-size: 0.86rem;
     font-variant-numeric: tabular-nums;
   }
-  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); }
-  th { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-  td code { background: var(--stock); padding: 1px 5px; border-radius: 3px; font-size: 0.86rem; }
-  caption {
-    text-align: left; font-size: 0.78rem; color: var(--muted);
-    padding-bottom: 8px; font-style: italic;
-  }
+  th, td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--rule); }
+  th { font-size: 0.68rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+  code { background: var(--stock); padding: 1px 5px; border-radius: 3px; font-size: 0.85rem; }
 
   footer {
-    font-size: 0.85rem; color: var(--muted);
+    font-size: 0.83rem; color: var(--muted);
     border-top: 1px solid var(--rule);
-    padding-top: 20px;
+    padding: 20px 0 60px;
   }
-  a { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -127,13 +105,7 @@
 <header>
   <div class="wrap">
     <h1>Campus Customs — App Check</h1>
-    <p>Three checks run against the live site, with screenshots taken from the running app.</p>
-    <dl>
-      <div><dt>Frontend</dt><dd>http://localhost:5174</dd></div>
-      <div><dt>Backend</dt><dd>http://127.0.0.1:8000</dd></div>
-      <div><dt>Data source</dt><dd>data/campus_customs.db</dd></div>
-      <div><dt>Result</dt><dd>3 of 3 passed</dd></div>
-    </dl>
+    <p>Three checks run against the live site. All three passed.</p>
   </div>
 </header>
 
@@ -141,124 +113,103 @@
 
   <!-- ============================ CHECK 1 ============================ -->
   <section>
-    <span class="check-no">Check 1</span>
-    <h2>Chat reports real inventory and price<span class="pass">Pass</span></h2>
+    <h2><span>Check 1</span>Chat reports real inventory and price</h2>
 
-    <p>
-      On the Morse&nbsp;¼&nbsp;Zip product page, the assistant was asked:
-      <em>“how many of this do you have in stock, by size? and what does it cost?”</em>
+    <img src="app_check_images/inventory.png"
+         alt="The Campus Customs chat panel on the Morse quarter zip page, listing stock by size — XS 15, S 2 low stock, M 8, L sold out, XL 25, XXL 2 low stock — with a $72 price and 52 units in stock total.">
+
+    <p class="explains">
+      The assistant was asked how much stock this item has by size and what it
+      costs, and returned the exact per-size quantities, the $72 price and the
+      52-unit total held in the database. It states plainly that
+      <strong>size L is sold out</strong> instead of giving a vague “yes, it’s
+      available”.
     </p>
 
-    <figure>
-      <img src="app_check_images/inventory.png"
-           alt="The Campus Customs chat panel listing stock for the Morse quarter zip: XS 15, S 2 low stock, M 8, L sold out, XL 25, XXL 2 low stock, 52 units total, priced $72.">
-      <figcaption>
-        <span class="proves">What this proves:</span>
-        The assistant returned the exact per-size quantities and price held in
-        the database, said plainly that <strong>size L is sold out</strong>, and
-        flagged the two sizes down to their last units — rather than giving a
-        vague “yes, it’s available”.
-      </figcaption>
-    </figure>
-
-    <table>
-      <caption>Every figure in the reply checked against the database row by row.</caption>
-      <tr><th>Field</th><th>Database</th><th>Assistant said</th><th>Match</th></tr>
-      <tr><td>Price</td><td><code>72.0</code></td><td>$72</td><td>yes</td></tr>
-      <tr><td>XS</td><td><code>15</code></td><td>15</td><td>yes</td></tr>
-      <tr><td>S</td><td><code>2</code></td><td>2 — low stock</td><td>yes</td></tr>
-      <tr><td>M</td><td><code>8</code></td><td>8</td><td>yes</td></tr>
-      <tr><td>L</td><td><code>0</code></td><td>sold out</td><td>yes</td></tr>
-      <tr><td>XL</td><td><code>25</code></td><td>25</td><td>yes</td></tr>
-      <tr><td>XXL</td><td><code>2</code></td><td>2 — low stock</td><td>yes</td></tr>
-      <tr><td>Total units</td><td><code>52</code></td><td>52 units</td><td>yes</td></tr>
-    </table>
-
-    <p style="margin-top:16px;font-size:0.9rem;color:var(--muted)">
-      The question said “this” rather than naming the product. The assistant
-      resolved it from the page the shopper was on, which is the page-context
-      mechanism from Problem&nbsp;8.
-    </p>
+    <details>
+      <summary>Every figure checked against the database</summary>
+      <table>
+        <tr><th>Field</th><th>Database</th><th>Assistant said</th></tr>
+        <tr><td>Price</td><td><code>72.0</code></td><td>$72</td></tr>
+        <tr><td>XS</td><td><code>15</code></td><td>15</td></tr>
+        <tr><td>S</td><td><code>2</code></td><td>2 — low stock</td></tr>
+        <tr><td>M</td><td><code>8</code></td><td>8</td></tr>
+        <tr><td>L</td><td><code>0</code></td><td>sold out</td></tr>
+        <tr><td>XL</td><td><code>25</code></td><td>25</td></tr>
+        <tr><td>XXL</td><td><code>2</code></td><td>2 — low stock</td></tr>
+        <tr><td>Total units</td><td><code>52</code></td><td>52 units</td></tr>
+      </table>
+      <p style="font-size:0.86rem;color:var(--muted);margin-top:12px">
+        The question said “this” rather than naming the product, so it also
+        shows the agent resolving the item from the page being viewed.
+      </p>
+    </details>
   </section>
 
   <!-- ============================ CHECK 2 ============================ -->
   <section>
-    <span class="check-no">Check 2</span>
-    <h2>A category question puts product cards on the page<span class="pass">Pass</span></h2>
+    <h2><span>Check 2</span>A category question puts product cards on the page</h2>
 
-    <p>
-      Asked <em>“what hoodies do you have?”</em> from the About page — deliberately
-      not the catalogue — to show the results appear wherever the shopper is.
+    <img src="app_check_images/search_cards.png"
+         alt="The About page showing a band headed “Pulled for hoodies” with eight hoodie product cards — each with image, name, colour swatches, description and price — next to the open chat panel listing the same products.">
+
+    <p class="explains">
+      Asking “what hoodies do you have?” made the agent search the catalogue and
+      the matching products appear on the page as cards, each with an image,
+      name, price and short description, and each opening its own product page.
+      This was asked from the <strong>About page</strong>, showing results follow
+      the shopper wherever they are.
     </p>
 
-    <figure>
-      <img src="app_check_images/search_cards.png"
-           alt="The About page showing a band headed “Pulled for hoodies” with eight hoodie product cards, each with image, name, colour swatches, description and price, alongside the open chat panel.">
-      <figcaption>
-        <span class="proves">What this proves:</span>
-        The agent’s search results were returned as structured data and rendered
-        on the page as full product cards — each with image, name, price and a
-        short description, and each linking to its own detail page. The reply
-        says “<strong>27 hoodies</strong>”, the real catalogue count, while
-        showing the top eight.
-      </figcaption>
-    </figure>
-
-    <table>
-      <caption>The API contract behind the cards.</caption>
-      <tr><th>Response field</th><th>Value</th><th>Used for</th></tr>
-      <tr><td><code>matched_for</code></td><td><code>"hoodies"</code></td><td>The heading, “Pulled for ‘hoodies’”</td></tr>
-      <tr><td><code>products[]</code></td><td>8 cards</td><td>The grid on the page</td></tr>
-      <tr><td><code>product_id</code></td><td><code>basic-hoodie-big-yale</code></td><td>Link to <code>/products/&lt;id&gt;</code></td></tr>
-      <tr><td><code>reply</code></td><td>“We have 27 hoodies…”</td><td>The chat message</td></tr>
-    </table>
-
-    <p style="margin-top:16px;font-size:0.9rem;color:var(--muted)">
-      The cards carry only products the agent actually retrieved through a tool
-      call, so the page cannot display an item the agent merely mentioned.
-    </p>
+    <details>
+      <summary>The API response behind the cards</summary>
+      <table>
+        <tr><th>Field</th><th>Value</th><th>Renders as</th></tr>
+        <tr><td><code>matched_for</code></td><td><code>"hoodies"</code></td><td>The heading, “Pulled for ‘hoodies’”</td></tr>
+        <tr><td><code>products[]</code></td><td>8 cards</td><td>The grid on the page</td></tr>
+        <tr><td><code>product_id</code></td><td><code>basic-hoodie-big-yale</code></td><td>Link to <code>/products/&lt;id&gt;</code></td></tr>
+        <tr><td><code>reply</code></td><td>“We have 27 hoodies…”</td><td>The chat message</td></tr>
+      </table>
+      <p style="font-size:0.86rem;color:var(--muted);margin-top:12px">
+        27 is the true catalogue count; the top eight are shown. The cards carry
+        only products the agent actually retrieved through a tool call.
+      </p>
+    </details>
   </section>
 
   <!-- ============================ CHECK 3 ============================ -->
   <section>
-    <span class="check-no">Check 3</span>
-    <h2>Usability feature: sorting and price filtering<span class="pass">Pass</span></h2>
+    <h2><span>Check 3</span>Usability feature: sorting and price filtering</h2>
 
-    <p>
-      One of the Problem&nbsp;9 improvements. The catalogue previously had no way
-      to order results or filter by price. Shown here with
-      <strong>Under&nbsp;$40</strong> and <strong>Price: low to high</strong> applied.
+    <img src="app_check_images/usability_filters.png"
+         alt="The Collection page with the Under $40 chip active and the sort control set to Price: low to high, showing “25 products match your filters” above a grid of $32 T-shirts.">
+
+    <p class="explains">
+      One of the Problem&nbsp;9 improvements: the catalogue previously had no way
+      to order results or filter by price. With <strong>Under $40</strong> and
+      <strong>Price: low to high</strong> applied, 102 products narrow to the
+      <strong>25</strong> at or under $40, and both settings are written to the
+      URL so the view can be shared or refreshed.
     </p>
 
-    <figure>
-      <img src="app_check_images/usability_filters.png"
-           alt="The Collection page with the Under $40 price chip active and the sort control set to Price: low to high, showing 25 products match your filters and a grid of $32 T-shirts.">
-      <figcaption>
-        <span class="proves">What this proves:</span>
-        The filter narrowed 102 products to the <strong>25</strong> at or under
-        $40 — every visible card priced $32 — and the sort control is set to
-        price ascending. Both settings are written to the URL
-        (<code>?sort=price_asc&amp;max_price=40</code>), so a filtered view can be
-        shared or bookmarked and survives a refresh.
-      </figcaption>
-    </figure>
-
-    <table>
-      <caption>Verified against the catalogue.</caption>
-      <tr><th>Control</th><th>Setting</th><th>Result</th></tr>
-      <tr><td>Price band</td><td>Under $40</td><td>25 of 102 products, all $32</td></tr>
-      <tr><td>Sort</td><td>Price: low to high</td><td>Cheapest tier first</td></tr>
-      <tr><td>URL state</td><td><code>?sort=price_asc&amp;max_price=40</code></td><td>Shareable, survives refresh</td></tr>
-      <tr><td>Invalid sort value</td><td><code>?sort=bogus</code></td><td>422, not a silent fallback</td></tr>
-    </table>
+    <details>
+      <summary>Verified against the catalogue</summary>
+      <table>
+        <tr><th>Control</th><th>Setting</th><th>Result</th></tr>
+        <tr><td>Price band</td><td>Under $40</td><td>25 of 102 products, all $32</td></tr>
+        <tr><td>Sort</td><td>Price: low to high</td><td>Cheapest tier first</td></tr>
+        <tr><td>URL state</td><td><code>?sort=price_asc&amp;max_price=40</code></td><td>Shareable, survives refresh</td></tr>
+        <tr><td>Invalid sort</td><td><code>?sort=bogus</code></td><td>422, not a silent fallback</td></tr>
+      </table>
+    </details>
   </section>
 
   <footer>
     <p>
-      Screenshots captured from the running application; every figure quoted was
-      checked against <code>data/campus_customs.db</code>. Images are in
-      <code>app_check_images/</code> and linked with relative paths, so this page
-      can be moved or opened offline.
+      Screenshots were captured from the running application at
+      <code>localhost:5174</code>, with the backend on port 8000. Images live in
+      <code>app_check_images/</code> and are linked with relative paths, so this
+      page opens on a double-click and works offline.
     </p>
     <p>Campus Customs — Yale SOM MGT 409. A student project, not affiliated with Yale University.</p>
   </footer>

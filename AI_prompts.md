@@ -374,3 +374,20 @@ app_check_images/inventory.png
 ```
 ````
 
+**Prompt 2 (follow-up):**
+
+````
+continuing on problem 11, make the html easy to grade. include a heading for each check, a screenshot, and one or two sentences explaining what the screenshot proves. put the screenshot image files in `output/app_check_images/`. link to them from `app_check.html` using relative paths. for example:
+
+```text
+app_check_images/inventory.png
+```
+````
+
+*What was lacking after the first prompt:* the page met the letter of the
+requirement but buried it — each check opened with an intro paragraph and
+closed with a verification table and footnote, so the heading, screenshot and
+one-line explanation a grader is looking for were not the first things on the
+page. The screenshots were also captured at 800px wide, which made the chat
+text small.
+
