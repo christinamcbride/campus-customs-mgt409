@@ -127,9 +127,23 @@ async def chat(
 
     try:
         result = await agent.run(message, deps=deps)
-    except Exception:
-        # Never leak provider errors, which can contain the request payload.
+    except Exception as exc:
+        # Never leak provider errors to the browser: they can echo the request
+        # payload and name the upstream provider. Log the detail, return a
+        # short message that tells the shopper whether retrying is worthwhile.
         log.exception("Agent run failed")
+        detail = str(exc).lower()
+        if "content_filter" in detail or "content management policy" in detail:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "I can't help with that request. Ask me about our products, "
+                "sizes, prices or stock and I'll look it up.",
+            ) from None
+        if "rate" in detail and "limit" in detail:
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                "The shopping assistant is busy right now. Try again shortly.",
+            ) from None
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY,
             "The shopping assistant could not answer just now. Please try again.",
