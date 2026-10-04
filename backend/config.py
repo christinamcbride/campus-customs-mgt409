@@ -13,8 +13,14 @@ BACKEND_DIR = PROJECT_ROOT / "backend"
 
 
 class Settings(BaseSettings):
+    # Later files win, so the dedicated key file overrides .env. All are
+    # optional: a missing file is skipped rather than being an error.
     model_config = SettingsConfigDict(
-        env_file=BACKEND_DIR / ".env",
+        env_file=(
+            BACKEND_DIR / ".env",
+            BACKEND_DIR / "PORTKEY_API_KEY.env",
+            PROJECT_ROOT / "PORTKEY_API_KEY.env",
+        ),
         env_file_encoding="utf-8",
         extra="ignore",
     )

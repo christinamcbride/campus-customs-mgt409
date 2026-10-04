@@ -503,4 +503,113 @@ individual card it cannot read.
 
 ---
 
-*Last updated: Problem 5 — PydanticAI agent backend.*
+---
+
+## 11. Product and Stock Tools (Problem 6)
+
+Five tools, all reading `data/campus_customs.db`. None can return a value the
+database did not supply.
+
+### `search_products` → `ProductSearchResult`
+
+Finding products by what the shopper described, and the source of every
+**description** and **price** the agent quotes.
+
+| Field | Why it is there |
+|---|---|
+| `query` | Echoes what was searched, so the agent can say what it looked for when reporting a miss. |
+| `match_count` | The real total, which can exceed the 8 cards returned — lets the agent say "we have 25 hoodies" while listing a few. |
+| `matches` | `ProductCard` objects carrying `description` and `price` straight from the row. |
+| `note` | **Only set when nothing matched**, and states plainly that the shop does not carry it. A bare empty list is easy to paper over; a sentence naming the miss is not. |
+
+### `get_product_details` → `ProductCardDetail` | `LookupFailure`
+
+Everything about one product: full description, colours, and every size.
+
+| Field | Why it is there |
+|---|---|
+| `description` + `description_available` | Three catalogue rows hold a generated placeholder rather than real text. The flag lets the agent say "no description on file" instead of reading machine output to a customer. |
+| `colors` | Answers "do you have it in pink?" from data rather than from the photo. |
+| `sizes` | Every size including zero-quantity ones, so nothing is silently dropped. |
+| `price` | Required, never defaulted — a malformed row fails loudly rather than rendering as $0.00. |
+
+### `check_size_availability` → `InventoryResult` | `LookupFailure`
+
+The stock-by-size answer. Field choices here are the core of the honesty
+requirement.
+
+| Field | Why it is there |
+|---|---|
+| `available_sizes` / `sold_out_sizes` | **Split into two lists rather than one flat list with a flag.** The agent cannot report what is available without also being handed what is gone. |
+| `available_size_labels` / `sold_out_size_labels` | Plain letters, pre-extracted. Reformatting a list of objects into prose is where a size gets dropped; copying a ready list is not. |
+| `low_stock_size_labels` | Surfaces "only 2 left in S" without the agent doing arithmetic on quantities. |
+| `fully_sold_out` | A stated boolean. No product in this database is fully sold out, so the agent must not reach for that phrasing by accident. |
+| `sizes_available_count` / `sizes_sold_out_count` | Lets the agent say "5 of 6 sizes" without counting. |
+| `units_in_stock` | Total units, for "how many are left?" |
+| `stock_statement` | A ready-made sentence naming availability, sold-out sizes and low stock. The prompt tells the agent not to contradict it. The correct answer is handed over assembled, rather than depending on the model to assemble it. |
+
+`SizeStock` states `in_stock` and `low_stock` explicitly rather than leaving the
+agent to infer them from `quantity`, so a reply cannot call a size available by
+misreading a zero.
+
+### `get_stock_summary` → `StockSummary` | `LookupFailure`
+
+Added for this problem to answer "how many are in stock". Works for one product
+or the whole shop.
+
+| Field | Why it is there |
+|---|---|
+| `scope` | `"product"` or `"shop"`, so the agent cannot present a shop-wide figure as one item's stock. |
+| `units_in_stock` | The actual sum from `inventory.quantity`. |
+| `products_counted` | 102 — the catalogue size. |
+| `products_with_stock` | 102. |
+| `products_with_a_sold_out_size` | 77. Makes the real shape of the data available: nothing is fully gone, but most items have a gap. |
+| `available_size_labels` / `sold_out_size_labels` | Populated for product scope so a count answer still names the sizes. |
+
+### `list_categories` → counts and price range
+
+Reads the catalogue rather than a hard-coded list, so the agent cannot claim a
+category that does not exist.
+
+### `LookupFailure`
+
+Returned by every id-based tool when the id does not exist. `reason` is written
+as an instruction to the agent — "Do not describe this product; search for it by
+name instead" — because a bare null is something a model will fill in.
+
+### Prompt additions
+
+`prompts/prompt.md` gained a tool table mapping question types to tools, plus
+rules that price and stock claims require a lookup, that ids must come from a
+search rather than be constructed, that both available **and** sold-out sizes
+must be reported, that `get_stock_summary` numbers are quoted exactly rather
+than rounded, and that placeholder descriptions are never read aloud.
+
+### Verified through the chat endpoint
+
+Driven against `POST /api/chat` with a scripted `FunctionModel`, so the route,
+`ShopContext`, the tools and the real database are all exercised without
+needing an API key:
+
+| Case | Result |
+|---|---|
+| Description + price | Morse ¼ Zip, **$72**, real description |
+| Prices across Jackets | 8 products, all **$98** |
+| Stock by size | available XS/S/M/XL/XXL, **sold out L**, low in S and XXL |
+| How many (one product) | 52 units, 5 of 6 sizes |
+| How many (shop) | 5,920 units, 102 products, 77 with a sold-out size |
+| Unknown id | `LookupFailure`, no invented product |
+| No match | `match_count: 0` with an explicit note |
+| Placeholder description | Flagged `description_available: false` |
+
+### Data-quality finding
+
+Three catalogue rows — `benjamin-franklin-t-shirt`,
+`berkeley-sweater-fleece-jacket`, `timothy-dwight-college-crewneck` — contain
+the text "Vision blocked; filename-based stub" as their description and have an
+empty `colors` array. Their prices and stock are real. The tools replace that
+text and set `description_available: false`. The database is not modified.
+
+---
+
+*Last updated: Problem 6 — product and stock tools.*

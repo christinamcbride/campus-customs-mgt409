@@ -242,3 +242,22 @@ uvicorn main:app --reload --port 8000
 ```
 ````
 
+---
+
+## Problem 6 — Tools for Product Information and Stock
+
+**Prompt 1 (initial):**
+
+```
+create a PORTKEY_API_KEY.env file for me in the folder and i'll paste in my API key. and then set up problem 6: tools for product information and stock
+give the agent tools that look up real information from `campus_customs.db`.
+the tools should be able to find:
+
+* product descriptions
+* prices
+* how many products are in stock
+* stock by size when the customer asks
+
+the agent must use the database as its source of truth. it should never invent prices or quantities. if a size is out of stock, it should say so clearly. expand `prompts/prompt.md` so the agent knows to call these tools when answering questions about prices and stock. add or update the return types in `models.py`. in `output/harness.md`, list each tool and explain which model fields you chose for the lookup results and why.please inspect the existing implementation first, make only the changes needed for this problem, test the tools through the chat endpoint, and tell me what you changed.
+```
+

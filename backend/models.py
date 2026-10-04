@@ -19,11 +19,17 @@ from pydantic import BaseModel, Field
 
 
 class SizeStock(BaseModel):
-    """Stock for one size of one product."""
+    """Stock for one size of one product.
+
+    `in_stock` and `low_stock` are stated rather than left for the model to
+    infer from `quantity`, so a reply cannot describe a size as available by
+    misreading a zero.
+    """
 
     size: str
     quantity: int
     in_stock: bool
+    low_stock: bool = False
 
 
 class ProductCard(BaseModel):
@@ -44,6 +50,13 @@ class ProductCard(BaseModel):
     image_url: str
     price: float
     total_stock: int | None = None
+    description_available: bool = Field(
+        default=True,
+        description=(
+            "False when the catalogue row holds a placeholder instead of a real "
+            "description. Do not quote the description text when this is False."
+        ),
+    )
 
 
 class ProductCardDetail(ProductCard):
@@ -72,7 +85,11 @@ class ProductSearchResult(BaseModel):
 
 
 class InventoryResult(BaseModel):
-    """Per-size stock for one product, split into available and sold out."""
+    """Per-size stock for one product, split into available and sold out.
+
+    The split is done here rather than handed over as one flat list, so the
+    model cannot report availability without also seeing what is gone.
+    """
 
     product_id: str
     name: str
@@ -80,10 +97,44 @@ class InventoryResult(BaseModel):
     available_sizes: list[SizeStock]
     sold_out_sizes: list[SizeStock]
     total_stock: int
+    units_in_stock: int
+    sizes_available_count: int
+    sizes_sold_out_count: int
+    fully_sold_out: bool
+    # Plain size letters, pre-joined, so a reply cannot drop one while
+    # reformatting a list of objects.
+    available_size_labels: list[str]
+    sold_out_size_labels: list[str]
+    low_stock_size_labels: list[str]
+    stock_statement: str = Field(
+        description=(
+            "A ready-to-use sentence stating availability and what is sold "
+            "out. Reuse or lightly rephrase it; do not contradict it."
+        )
+    )
 
-    @property
-    def fully_sold_out(self) -> bool:
-        return self.total_stock == 0
+
+class StockSummary(BaseModel):
+    """How much stock exists, for one product or across the whole shop.
+
+    Answers "how many do you have?" with counts straight from the inventory
+    table, so the model never has to estimate a quantity.
+    """
+
+    scope: str = Field(description='Either "product" or "shop".')
+    product_id: str | None = None
+    name: str | None = None
+    price: float | None = None
+    units_in_stock: int = Field(description="Total units summed across sizes.")
+    products_counted: int = Field(
+        default=1, description="How many products this summary covers."
+    )
+    products_with_stock: int | None = None
+    products_with_a_sold_out_size: int | None = None
+    sizes_available_count: int | None = None
+    sizes_sold_out_count: int | None = None
+    available_size_labels: list[str] = Field(default_factory=list)
+    sold_out_size_labels: list[str] = Field(default_factory=list)
 
 
 class LookupFailure(BaseModel):
