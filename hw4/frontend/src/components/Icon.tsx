@@ -16,6 +16,7 @@ type IconName =
   | 'check'
   | 'registration'
   | 'squeegee'
+  | 'bag'
 
 interface IconProps {
   name: IconName
@@ -67,6 +68,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M12 15.5v7" />
       <path d="M1.5 12h7" />
       <path d="M15.5 12h7" />
+    </>
+  ),
+  // A paper shop bag with folded handles.
+  bag: (
+    <>
+      <path d="M5 8h14l-1 12H6L5 8Z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
     </>
   ),
   // A squeegee pulling ink across a screen.

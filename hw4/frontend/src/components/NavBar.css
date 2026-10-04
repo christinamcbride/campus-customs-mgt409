@@ -131,3 +131,24 @@
   .nav-signout { width: 100%; margin-top: 12px; }
   .nav-account-placeholder { display: none; }
 }
+
+/* Bag link, with the count struck on as a small inked disc. */
+.nav-bag { position: relative; display: inline-flex; align-items: center; gap: 7px; }
+.nav-bag::after { display: none; }
+.nav-bag-label { display: inline; }
+.nav-bag-count {
+  display: inline-grid; place-items: center;
+  min-width: 19px; height: 19px; padding: 0 5px;
+  border-radius: 99px;
+  background: var(--brass);
+  color: var(--ink-deep);
+  font-size: 0.68rem;
+  font-variation-settings: 'wght' 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+.nav-bag:hover .nav-bag-count { background: var(--brass-bright); }
+
+@media (max-width: 900px) {
+  .nav-bag { padding: 15px 2px; }
+}

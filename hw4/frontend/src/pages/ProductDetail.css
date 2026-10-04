@@ -162,3 +162,15 @@
   .detail-grid { grid-template-columns: 1fr; gap: 28px; }
   .detail-media { position: static; }
 }
+
+/* Confirmation after bagging, so the button is never a dead click. */
+.add-confirm {
+  margin: 12px 0 0;
+  padding: 10px 13px;
+  font-size: 0.89rem;
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid #c6ddd0;
+  border-radius: var(--radius-sm);
+}
+.add-confirm a { color: var(--success); font-variation-settings: 'wght' 650; }

@@ -1,0 +1,138 @@
+.bag-head { margin-bottom: 26px; padding-bottom: 16px; border-bottom: var(--rule-ink); }
+.bag-head h1 { margin-bottom: 8px; }
+.bag-head p { max-width: 58ch; margin: 0; }
+
+.bag-lines { list-style: none; margin: 0 0 30px; padding: 0; }
+
+/* Each line reads as a row on a printed order slip. */
+.bag-line {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--stock-deep);
+}
+.bag-line:first-child { border-top: 1px solid var(--stock-deep); }
+
+.bag-thumb { display: block; flex: none; }
+.bag-thumb img {
+  width: 96px; height: 96px; object-fit: cover;
+  background: var(--stock-warm);
+  border: 1px solid var(--stock-deep);
+  border-radius: var(--radius-sm);
+}
+
+.bag-name {
+  font-family: var(--font-display);
+  font-variation-settings: var(--wonk-text), 'opsz' 24, 'wght' 650;
+  font-size: 1.08rem;
+  color: var(--ink-press);
+  text-decoration: none;
+}
+.bag-name:hover { text-decoration: underline; text-decoration-color: var(--brass); }
+.bag-meta { margin: 4px 0 0; font-size: 0.88rem; color: var(--ink-muted); }
+
+.bag-warn {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid #e3c4bf;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  max-width: 46ch;
+}
+
+.bag-qty { display: flex; align-items: center; gap: 8px; }
+.bag-qty label {
+  font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+  font-variation-settings: 'wght' 650;
+  color: var(--ink-soft);
+}
+.bag-qty input {
+  width: 66px; font: inherit; font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding: 9px 8px;
+  background: var(--stock-white);
+  border: 1px solid var(--stock-deep);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--ink-press);
+}
+.bag-qty input:focus { border-bottom-color: var(--brass); }
+
+.bag-line-total {
+  font-family: var(--font-display);
+  font-variation-settings: var(--wonk-text), 'opsz' 24, 'wght' 700;
+  font-size: 1.1rem;
+  color: var(--ink-press);
+  min-width: 82px;
+  text-align: right;
+}
+
+.bag-remove {
+  display: grid; place-items: center;
+  width: 32px; height: 32px;
+  background: transparent;
+  border: 1px solid var(--stock-deep);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 0.15s var(--settle), border-color 0.15s var(--settle);
+}
+.bag-remove:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Footer: the tally, set like the bottom of a receipt. */
+.bag-foot {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 28px; flex-wrap: wrap;
+}
+.bag-summary {
+  flex: 0 1 380px;
+  background: var(--stock-white);
+  border: 1px solid var(--stock-deep);
+  border-radius: var(--radius-md);
+  padding: 22px;
+}
+.bag-subtotal {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-bottom: 14px;
+  border-bottom: var(--rule-ink);
+}
+.bag-subtotal span {
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  font-variation-settings: 'wght' 650;
+  color: var(--ink-soft);
+}
+.bag-subtotal strong {
+  font-family: var(--font-display);
+  font-variation-settings: var(--wonk-display), 'opsz' 48, 'wght' 750;
+  font-size: 1.6rem;
+  color: var(--ink-press);
+}
+.bag-note {
+  font-size: 0.86rem;
+  color: var(--ink-muted);
+  margin: 14px 0 18px;
+}
+.bag-summary .btn { width: 100%; }
+
+@media (max-width: 760px) {
+  .bag-line {
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "thumb detail remove"
+      "thumb qty    total";
+    row-gap: 12px;
+  }
+  .bag-thumb { grid-area: thumb; }
+  .bag-thumb img { width: 72px; height: 72px; }
+  .bag-detail { grid-area: detail; }
+  .bag-qty { grid-area: qty; }
+  .bag-line-total { grid-area: total; }
+  .bag-remove { grid-area: remove; align-self: start; }
+  .bag-foot { flex-direction: column; }
+  .bag-summary { flex: 1 1 auto; width: 100%; }
+}

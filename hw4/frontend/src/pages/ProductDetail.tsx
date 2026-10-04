@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError, fetchProduct, formatPrice } from '../api'
+import { useBag } from '../bag'
 import type { ProductDetail as Detail } from '../types'
 import './ProductDetail.css'
 
@@ -11,6 +12,8 @@ export default function ProductDetail() {
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [chosenSize, setChosenSize] = useState<string | null>(null)
+  const [added, setAdded] = useState<string | null>(null)
+  const { add } = useBag()
 
   useEffect(() => {
     const ctrl = new AbortController()
@@ -18,6 +21,7 @@ export default function ProductDetail() {
     setError(null)
     setNotFound(false)
     setChosenSize(null)
+    setAdded(null)
     window.scrollTo({ top: 0 })
 
     fetchProduct(productId, ctrl.signal)
@@ -155,12 +159,40 @@ export default function ProductDetail() {
                   : 'Every size is currently in stock.'}
             </p>
 
-            <button className="btn btn-primary add-btn" disabled={!chosenSize}>
+            <button
+              className="btn btn-primary add-btn"
+              disabled={!chosenSize}
+              onClick={() => {
+                if (!chosenSize) return
+                const stockForSize =
+                  product.sizes.find((s) => s.size === chosenSize)?.quantity ?? 1
+                add(
+                  {
+                    product_id: product.product_id,
+                    name: product.name,
+                    size: chosenSize,
+                    price: product.price,
+                    image_url: product.image_url,
+                  },
+                  1,
+                  stockForSize,
+                )
+                setAdded(chosenSize)
+              }}
+            >
               {chosenSize ? `Add size ${chosenSize} to bag` : 'Select a size'}
             </button>
+
+            {added && (
+              <p className="add-confirm" role="status">
+                Size {added} is in your bag.{' '}
+                <Link to="/bag">View bag</Link>
+              </p>
+            )}
+
             <p className="checkout-note">
-              Checkout isn't live in this build — sizes and stock shown above are read
-              from our live inventory.
+              Checkout isn't part of this build, so nothing is reserved or charged.
+              Sizes and stock above are read from our live inventory.
             </p>
           </section>
 

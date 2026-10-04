@@ -1232,4 +1232,39 @@ the product images and the API key are all present.
 
 ---
 
-*Last updated: Problem 12 — audit trail, safety rules, and system reference.*
+---
+
+## 18. The Shopping Bag
+
+Added after testing surfaced a dead control: the product page had an
+"Add size X to bag" button with no click handler. The assignment never asked
+for a cart, but a button that looks active and does nothing is a defect — a
+shopper clicks it and cannot tell whether the site is broken.
+
+| Piece | File |
+|---|---|
+| State and persistence | `frontend/src/bag.tsx` |
+| Bag page | `frontend/src/pages/Bag.tsx` |
+| Nav count badge | `frontend/src/components/NavBar.tsx` |
+
+**How it behaves**
+
+- Held in the browser and persisted to `localStorage`, so it survives a reload
+  without needing an account. A malformed stored value is discarded rather
+  than crashing the shop.
+- **Quantities are capped at real stock.** Adding size S of the Morse ¼ Zip
+  three times yields a quantity of 2, because the database holds 2.
+- **Stock is re-checked when the bag is opened.** Each bagged product is
+  re-fetched; if a size has sold through, or there is less than the bagged
+  quantity, the line shows a warning naming the number actually left.
+- **No checkout.** The summary states plainly that nothing is reserved or
+  charged. The shop does not take payment, and the bag does not pretend
+  otherwise — consistent with the honesty rule that governs the assistant.
+
+**Verified:** cap at 2 from 3 clicks; subtotal 2×$72 + 1×$68 = $212; the
+warning "Only 2 left in S" when a quantity is raised past stock; survival
+across a page reload; removal and empty-bag states.
+
+---
+
+*Last updated: Problem 13 — hw4/ layout, plus the shopping bag.*

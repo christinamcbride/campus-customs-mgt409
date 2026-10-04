@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
+import { useBag } from '../bag'
 import Icon from './Icon'
 import './NavBar.css'
 
@@ -20,6 +21,7 @@ export default function NavBar() {
   const [signingOut, setSigningOut] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
   const { user, loading, logout } = useAuth()
+  const { count } = useBag()
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -85,6 +87,20 @@ export default function NavBar() {
             ))}
           </ul>
           <ul className="nav-account">
+            <li>
+              <NavLink to="/bag" className="nav-bag" onClick={() => setOpen(false)}>
+                <Icon name="bag" size={19} />
+                <span className="nav-bag-label">Bag</span>
+                {count > 0 && (
+                  <span className="nav-bag-count" aria-hidden="true">{count}</span>
+                )}
+                <span className="sr-only">
+                  {count === 0
+                    ? 'Bag, empty'
+                    : `Bag, ${count} ${count === 1 ? 'item' : 'items'}`}
+                </span>
+              </NavLink>
+            </li>
             {loading ? (
               <li aria-hidden="true" className="nav-account-placeholder" />
             ) : user ? (

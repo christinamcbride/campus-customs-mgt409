@@ -116,6 +116,10 @@ All optional; sensible defaults apply. See `.env.example`.
 four sort orders, and in-stock filtering. Every product has its own page with a
 large image, full description, colours, and stock for each size.
 
+**Bag.** Add a size to the bag and it persists in the browser across reloads.
+Quantities are capped at what the database actually has, and the bag re-checks
+stock when opened — if a size sold out since you bagged it, it says so.
+
 **Accounts.** Registration and login with PBKDF2-HMAC-SHA256 hashing, a fresh
 salt per account, and an HttpOnly signed session cookie. No plaintext password
 is stored, logged, or returned anywhere.
@@ -175,6 +179,8 @@ data/                  NOT IN GIT — ships with the assignment
 - **Ports.** Backend 8000, frontend 5174.
 - **Not committed:** `data/` (database and product images), any `.env` or
   `PORTKEY_API_KEY.env`, `node_modules`, `.venv`, and build output.
-- **Checkout is not implemented.** Sizes and stock shown are real, read live
-  from the database, but no orders are placed.
+- **There is a working bag, but no checkout.** You can add sizes to a bag,
+  change quantities and remove items; it persists in the browser and
+  re-checks stock against the database each time you open it. It stops short
+  of payment — no order is placed and nothing is reserved.
 - A student project. Not affiliated with Yale University.
