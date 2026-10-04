@@ -345,3 +345,32 @@ use an imaginative and innovative design. write `output/design.md` and briefly e
 keep the explanation concrete and short.
 ```
 
+---
+
+## Problem 11 — Site Testing (App Check)
+
+**Prompt 1 (initial):**
+
+````
+problem 11: site testing (app check) 
+test the live site and document the results in `output/app_check.html`. this should be a page that can be opened by double-clicking it.
+include clear screenshots and short captions for these checks:
+
+1. chat checking the inventory level of an item, with honest stock and price information from the database;
+2. dynamic search-result cards appearing after a category question, such as asking about hoodies;
+3. one of the usability features added in problem 9.
+
+make the html easy to grade. for each check, include:
+
+* a heading
+* a screenshot
+* one or two sentences explaining what the screenshot proves
+
+put the screenshot files in `output/app_check_images/`.
+link to the images from `app_check.html` using relative paths. for example:
+
+```text
+app_check_images/inventory.png
+```
+````
+
