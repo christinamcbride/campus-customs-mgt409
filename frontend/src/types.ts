@@ -33,3 +33,20 @@ export interface CategoryList {
   price_min: number
   price_max: number
 }
+
+export interface User {
+  id: number
+  name: string
+  email: string
+  first_name: string | null
+  last_name: string | null
+  created_at: string
+}
+
+export interface RegisterInput {
+  first_name: string
+  last_name: string
+  email: string
+  password: string
+  confirm_password: string
+}

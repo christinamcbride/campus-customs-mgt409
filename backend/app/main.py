@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import get_settings
-from .routers import catalogue
+from .routers import auth, catalogue
 
 log = logging.getLogger("campus_customs")
 
@@ -27,6 +27,7 @@ app.add_middleware(
 )
 
 app.include_router(catalogue.router)
+app.include_router(auth.router)
 
 
 @app.exception_handler(FileNotFoundError)

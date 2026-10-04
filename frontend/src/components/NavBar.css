@@ -67,3 +67,23 @@
   .nav-account { padding-left: 0; border-left: none; margin-top: 10px; }
   .nav-links a.cta { text-align: center; margin-top: 12px; }
 }
+
+.nav-greeting {
+  color: var(--brass-200); font-size: .92rem; font-weight: 500;
+  white-space: nowrap;
+}
+.nav-signout {
+  font: inherit; font-size: .95rem; font-weight: 500; cursor: pointer;
+  background: transparent; border: 1px solid rgba(255,255,255,.3);
+  color: var(--navy-100); padding: 8px 15px; border-radius: var(--radius-sm);
+}
+.nav-signout:hover:not(:disabled) { background: rgba(255,255,255,.12); color: var(--white); }
+.nav-signout:disabled { opacity: .6; cursor: not-allowed; }
+/* Reserve the slot during the session check so the bar does not jump. */
+.nav-account-placeholder { width: 150px; height: 20px; }
+
+@media (max-width: 860px) {
+  .nav-greeting { padding: 13px 2px; border-top: 1px solid rgba(255,255,255,.1); }
+  .nav-signout { width: 100%; margin-top: 12px; }
+  .nav-account-placeholder { display: none; }
+}

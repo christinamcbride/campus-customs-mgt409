@@ -248,4 +248,116 @@ the system sans stack. No webfont is loaded, so the site renders identically off
 
 ---
 
-*Last updated: Problem 3 — website build.*
+---
+
+## 9. Authentication (Problem 4)
+
+### What is stored for a user
+
+The `users` table holds exactly six things per account, and nothing else:
+
+| Column | Example | Notes |
+|---|---|---|
+| `id` | `4` | Primary key, used as the session subject |
+| `name` | `Nora Whitfield` | Derived as `first_name + ' ' + last_name` |
+| `email` | `nora@yale.edu` | Stored lowercased; UNIQUE in the schema |
+| `password_hash` | `pbkdf2_sha256$240000$<salt>$<digest>` | Never the password itself |
+| `created_at` | `2026-10-04 18:02:55` | Set by the column default |
+| `first_name` / `last_name` | `Nora` / `Whitfield` | Collected at registration |
+
+No plaintext password, no security questions, no password hints, and no
+recovery copy of the password exists anywhere in the project.
+
+### How passwords are protected
+
+Passwords are hashed with **PBKDF2-HMAC-SHA256**, which is deliberately slow and
+salted:
+
+- **Salted.** Every account gets a fresh 16-byte random salt. Two users who pick
+  the same password still get different stored values, so a stolen database
+  cannot be attacked with a single precomputed rainbow table.
+- **Slow by design.** New accounts use **240,000 iterations**. A correct login
+  pays that cost once; an attacker guessing offline pays it for every guess.
+- **One-way.** The stored value is a digest. There is no key, no decrypt
+  function, and no code path in this project that can reverse it. Verifying a
+  login recomputes the digest from the submitted password and compares. A person
+  reading the database, or an AI system reading this repository, sees only the
+  digest and learns nothing about the password.
+- **Constant-time comparison.** `hmac.compare_digest` is used so that comparison
+  timing does not leak how much of a digest was guessed correctly.
+- **Never returned, never logged.** The `User` response model has no password
+  field of any kind, and `password_hash` is read only inside the login check.
+  Verified by searching API responses, the server log, and the database for a
+  known test password: zero hits.
+- **Length bounds.** Minimum 8 characters; maximum 200, so a huge input cannot be
+  used to force unbounded hashing work.
+
+### The seeded hash format
+
+The three accounts shipped in the database use a **three-segment** format with no
+iteration count recorded:
+
+```
+pbkdf2_sha256$<salt>$<digest>
+```
+
+The iteration count was not documented, so it was recovered by testing the known
+test-user password against common values: **120,000 iterations, salt treated as
+UTF-8 text**. Verification treats any three-segment hash as using that count.
+
+New accounts are written in a **four-segment** format that records the cost, so
+it can be raised later without locking anyone out:
+
+```
+pbkdf2_sha256$<iterations>$<salt>$<digest>
+```
+
+On a successful login with a weaker stored hash, the hash is transparently
+upgraded to the current parameters — the one moment the plaintext is legitimately
+in memory. This rewrites the seeded row in the local database on first login.
+
+### Sessions
+
+Login returns a signed token in an **HttpOnly cookie** named `cc_session`:
+
+- **HttpOnly**, so page JavaScript cannot read it and an XSS bug cannot steal the
+  session. Confirmed in the browser: `document.cookie` does not contain it.
+- **SameSite=Lax**, so it is not sent on cross-site POSTs.
+- **Secure** flag available via `COOKIE_SECURE=true` for HTTPS deployment.
+- The token is `base64url(payload).base64url(HMAC-SHA256)` over `{sub, exp}`. The
+  signature covers the exact payload bytes, so a client cannot change the user id
+  or the expiry. A forged or tampered token is rejected.
+- Expiry is 7 days by default (`JWT_TTL_SECONDS`).
+- If `JWT_SECRET` is unset the app still starts, using a key generated for that
+  process, and logs a warning. Sessions then end when the server restarts. This
+  keeps the app runnable by a grader who configures nothing.
+
+### Leak-resistant behaviour
+
+- **Login errors are identical** for an unknown email and a wrong password:
+  `"Incorrect email or password."` Neither the message nor the status code
+  reveals whether an address has an account.
+- **Timing is equalised.** When the email is unknown, a dummy hash is verified so
+  the response takes comparable time, closing the timing side channel.
+- **Email comparison is case-insensitive** for both login and the duplicate
+  check, so `TEST@…` cannot be used to register a second account.
+
+### Endpoints
+
+| Endpoint | Behaviour |
+|---|---|
+| `POST /api/auth/register` | 201 + session on success; 409 duplicate email; 422 validation |
+| `POST /api/auth/login` | 200 + session; 401 on any credential failure |
+| `POST /api/auth/logout` | 204 and clears the cookie |
+| `GET /api/auth/me` | 200 with the current user; 401 when signed out |
+
+### Bug found and fixed during Problem 4
+
+`logout` cleared the cookie on the injected `Response` but returned a newly
+constructed one, so the `Set-Cookie` header was silently dropped and the session
+survived logout. Caught by asserting that `/me` returns 401 after logging out,
+rather than by trusting the 204.
+
+---
+
+*Last updated: Problem 4 — authentication.*

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth'
 import './NavBar.css'
 
 const LINKS = [
@@ -15,7 +16,21 @@ const ACCOUNT_LINKS = [
 
 export default function NavBar() {
   const [open, setOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
+  const { user, loading, logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    setSigningOut(true)
+    try {
+      await logout()
+      setOpen(false)
+      navigate('/')
+    } finally {
+      setSigningOut(false)
+    }
+  }
 
   // Escape closes the menu and returns focus to the control that opened it.
   useEffect(() => {
@@ -67,17 +82,37 @@ export default function NavBar() {
             ))}
           </ul>
           <ul className="nav-account">
-            {ACCOUNT_LINKS.map((l, i) => (
-              <li key={l.to}>
-                <NavLink
-                  to={l.to}
-                  className={i === 1 ? 'cta' : undefined}
-                  onClick={() => setOpen(false)}
-                >
-                  {l.label}
-                </NavLink>
-              </li>
-            ))}
+            {loading ? (
+              <li aria-hidden="true" className="nav-account-placeholder" />
+            ) : user ? (
+              <>
+                <li className="nav-greeting">
+                  Hi, {user.first_name || user.name.split(' ')[0]}
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className="nav-signout"
+                    onClick={handleLogout}
+                    disabled={signingOut}
+                  >
+                    {signingOut ? 'Signing out…' : 'Log Out'}
+                  </button>
+                </li>
+              </>
+            ) : (
+              ACCOUNT_LINKS.map((l, i) => (
+                <li key={l.to}>
+                  <NavLink
+                    to={l.to}
+                    className={i === 1 ? 'cta' : undefined}
+                    onClick={() => setOpen(false)}
+                  >
+                    {l.label}
+                  </NavLink>
+                </li>
+              ))
+            )}
           </ul>
         </nav>
       </div>

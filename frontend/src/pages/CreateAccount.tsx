@@ -1,32 +1,61 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { ApiError } from '../api'
+import { useAuth } from '../auth'
 import './Auth.css'
 
-/** Registration form. Wired to the backend in a later problem. */
+const MIN_PASSWORD = 8
+
 export default function CreateAccount() {
+  const { register } = useAuth()
+  const navigate = useNavigate()
+
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', password: '', confirm: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [notice, setNotice] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
     const next: Record<string, string> = {}
     if (!form.firstName.trim()) next.firstName = 'Enter your first name.'
     if (!form.lastName.trim()) next.lastName = 'Enter your last name.'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = 'Enter a valid email address.'
-    if (form.password.length < 8) next.password = 'Use at least 8 characters.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      next.email = 'Enter a valid email address.'
+    }
+    if (form.password.length < MIN_PASSWORD) {
+      next.password = `Use at least ${MIN_PASSWORD} characters.`
+    }
     if (form.confirm !== form.password) next.confirm = 'Both passwords must match.'
     setErrors(next)
-    setNotice(
-      Object.keys(next).length === 0
-        ? 'Accounts are not connected yet — registration arrives in the next build.'
-        : null,
-    )
+    setFormError(null)
+    if (Object.keys(next).length > 0) return
+
+    setSubmitting(true)
+    try {
+      await register({
+        first_name: form.firstName.trim(),
+        last_name: form.lastName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        confirm_password: form.confirm,
+      })
+      navigate('/', { replace: true })
+    } catch (err) {
+      setFormError(
+        err instanceof ApiError
+          ? err.message
+          : 'Could not create your account just now.',
+      )
+      setForm((f) => ({ ...f, password: '', confirm: '' }))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const fields = [
@@ -43,7 +72,9 @@ export default function CreateAccount() {
         <h1>Create your account</h1>
         <p className="muted">Save your favorites and keep your chat history.</p>
 
-        {notice && <div className="alert alert-info" role="status">{notice}</div>}
+        {formError && (
+          <div className="alert alert-error" role="alert">{formError}</div>
+        )}
 
         <form onSubmit={submit} noValidate>
           <div className="field-row">
@@ -52,7 +83,8 @@ export default function CreateAccount() {
                 <label htmlFor={f.k}>{f.label}</label>
                 <input
                   id={f.k} type={f.type} value={form[f.k]} autoComplete={f.ac}
-                  onChange={set(f.k)} aria-invalid={Boolean(errors[f.k])}
+                  disabled={submitting} onChange={set(f.k)}
+                  aria-invalid={Boolean(errors[f.k])}
                   aria-describedby={errors[f.k] ? `${f.k}-err` : undefined}
                 />
                 {errors[f.k] && <p className="field-err" id={`${f.k}-err`}>{errors[f.k]}</p>}
@@ -65,19 +97,22 @@ export default function CreateAccount() {
               <label htmlFor={f.k}>{f.label}</label>
               <input
                 id={f.k} type={f.type} value={form[f.k]} autoComplete={f.ac}
-                onChange={set(f.k)} aria-invalid={Boolean(errors[f.k])}
+                disabled={submitting} onChange={set(f.k)}
+                aria-invalid={Boolean(errors[f.k])}
                 aria-describedby={
                   errors[f.k] ? `${f.k}-err` : f.k === 'password' ? 'pw-hint' : undefined
                 }
               />
               {f.k === 'password' && !errors.password && (
-                <p className="hint" id="pw-hint">At least 8 characters.</p>
+                <p className="hint" id="pw-hint">At least {MIN_PASSWORD} characters.</p>
               )}
               {errors[f.k] && <p className="field-err" id={`${f.k}-err`}>{errors[f.k]}</p>}
             </div>
           ))}
 
-          <button className="btn btn-primary auth-submit" type="submit">Create account</button>
+          <button className="btn btn-primary auth-submit" type="submit" disabled={submitting}>
+            {submitting ? 'Creating account…' : 'Create account'}
+          </button>
         </form>
 
         <p className="auth-alt">

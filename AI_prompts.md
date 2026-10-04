@@ -186,3 +186,33 @@ add a chat interface in the bottom-right corner of the site. a floating chat pan
 you will need a small api soon to read the database. it is okay to start a simple fastapi app in `backend/main.py` that serves products and images. this will later grow into the agent backend in problem 5.
 ```
 
+---
+
+## Problem 4 — Create an Account and Log In
+
+**Prompt 1 (initial):**
+
+```
+problem 4: create an account and log in
+build a normal create-account and login flow. for the create-account page, include:
+
+* first name
+* last name
+* email
+* password
+* password confirmation
+
+for the login page, include:
+
+* email
+* password
+
+new accounts should be saved in the `users` table. make sure passwords are stored securely so that neither people nor ai systems can access the original passwords. the seed database already has a test user you can use while building:
+
+* email: `test@campuscustoms.yale.edu`
+* password: `password`
+
+confirm that you can log in as this test user and that a brand-new account you create also works.
+update `output/harness.md` with an explanation of how authentication works including what information is stored for a user and how passwords are protected.
+```
+

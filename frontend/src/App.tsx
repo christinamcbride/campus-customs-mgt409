@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './auth'
 import NavBar from './components/NavBar'
 import Footer from './components/Footer'
 import ChatWidget from './components/ChatWidget'
@@ -13,6 +14,7 @@ import NotFound from './pages/NotFound'
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <a className="sr-only skip-link" href="#main">Skip to main content</a>
       <NavBar />
       <main id="main">
@@ -28,6 +30,7 @@ export default function App() {
       </main>
       <Footer />
       <ChatWidget />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

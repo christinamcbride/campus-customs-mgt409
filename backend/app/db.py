@@ -177,3 +177,66 @@ def get_inventory(conn: sqlite3.Connection, product_id: str) -> list[dict[str, A
         {"size": s, "quantity": by_size[s], "in_stock": by_size[s] > 0} for s in extras
     )
     return ordered
+
+
+# --------------------------------------------------------------------------
+# Users
+# --------------------------------------------------------------------------
+# Only non-sensitive columns are ever selected into a response. `password_hash`
+# is read solely inside the login check and never returned by any endpoint.
+
+USER_PUBLIC_COLUMNS = "id, name, email, first_name, last_name, created_at"
+
+
+def get_user_by_email(conn: sqlite3.Connection, email: str) -> sqlite3.Row | None:
+    """Look up a user for login. Email comparison is case-insensitive."""
+    return conn.execute(
+        "SELECT id, name, email, first_name, last_name, created_at, password_hash "
+        "FROM users WHERE email = ? COLLATE NOCASE",
+        (email.strip(),),
+    ).fetchone()
+
+
+def get_user_by_id(conn: sqlite3.Connection, user_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        f"SELECT {USER_PUBLIC_COLUMNS} FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+
+
+def create_user(
+    conn: sqlite3.Connection,
+    *,
+    first_name: str,
+    last_name: str,
+    email: str,
+    password_hash: str,
+) -> sqlite3.Row:
+    """Insert a new account. Raises sqlite3.IntegrityError if the email exists."""
+    full_name = f"{first_name} {last_name}".strip()
+    cur = conn.execute(
+        "INSERT INTO users (name, email, password_hash, first_name, last_name) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (full_name, email, password_hash, first_name, last_name),
+    )
+    conn.commit()
+    row = get_user_by_id(conn, int(cur.lastrowid))
+    assert row is not None  # Just inserted.
+    return row
+
+
+def update_password_hash(conn: sqlite3.Connection, user_id: int, new_hash: str) -> None:
+    """Upgrade a stored hash in place after a successful login."""
+    conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+    conn.commit()
+
+
+def row_to_user(row: sqlite3.Row) -> dict[str, Any]:
+    """Public view of an account. Never includes the password hash."""
+    return {
+        "id": int(row["id"]),
+        "name": row["name"],
+        "email": row["email"],
+        "first_name": row["first_name"],
+        "last_name": row["last_name"],
+        "created_at": row["created_at"],
+    }

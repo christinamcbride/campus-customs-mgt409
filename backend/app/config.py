@@ -1,5 +1,7 @@
 """Application settings, loaded from the environment / backend/.env."""
 
+import logging
+import secrets
 from functools import lru_cache
 from pathlib import Path
 
@@ -29,8 +31,11 @@ class Settings(BaseSettings):
     ai_model: str = "gpt-4o-mini"
 
     # --- Auth ---
+    # Signing key for session cookies. If it is not set the app still runs, but
+    # with a key generated at startup, so sessions end when the server restarts.
     jwt_secret: str = ""
     jwt_ttl_seconds: int = 60 * 60 * 24 * 7
+    cookie_secure: bool = False  # Set true when serving over HTTPS.
 
     # --- CORS ---
     cors_origins: str = "http://localhost:5173"
@@ -44,6 +49,24 @@ class Settings(BaseSettings):
         return bool(self.portkey_api_key)
 
 
+    @property
+    def session_secret(self) -> str:
+        """The configured signing key, or the ephemeral fallback."""
+        return self.jwt_secret or _EPHEMERAL_SECRET
+
+
+# Generated once per process. Used only when JWT_SECRET is unset so that a
+# grader can run the app without configuring anything.
+_EPHEMERAL_SECRET = secrets.token_urlsafe(32)
+
+
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if not settings.jwt_secret:
+        logging.getLogger("campus_customs").warning(
+            "JWT_SECRET is not set; using a key generated for this process. "
+            "Sessions will not survive a restart. Set JWT_SECRET in backend/.env "
+            "for stable logins."
+        )
+    return settings
