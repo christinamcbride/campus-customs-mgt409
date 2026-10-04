@@ -1,43 +1,10 @@
-# ---- Assignment data: never commit ----
-data/
-!data/.gitkeep
-*.db
-*.sqlite
-*.sqlite3
+# Repository root. The project itself lives in hw4/, which has its own
+# .gitignore covering the data pack and secrets.
 
-# ---- Secrets ----
-# Match any env file anywhere, including names like PORTKEY_API_KEY.env,
-# so a key file cannot be committed by having an unexpected name.
-.env
-*.env
-.env.*
-**/*.env
-!.env.example
-!backend/.env.example
-*.pem
-*.key
-*secret*
-!**/security.py
-
-# ---- Python ----
-__pycache__/
-*.py[cod]
 .venv/
 venv/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# ---- Node ----
-node_modules/
-dist/
-dist-ssr/
-*.local
-.vite/
-
-# ---- Editors / OS ----
+__pycache__/
 .DS_Store
-.idea/
-.vscode/
-*.swp
+.env
+*.env
+!**/.env.example

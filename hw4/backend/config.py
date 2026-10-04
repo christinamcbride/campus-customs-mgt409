@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # optional: a missing file is skipped rather than being an error.
     model_config = SettingsConfigDict(
         env_file=(
+            PROJECT_ROOT / ".env",
             BACKEND_DIR / ".env",
             BACKEND_DIR / "PORTKEY_API_KEY.env",
             PROJECT_ROOT / "PORTKEY_API_KEY.env",

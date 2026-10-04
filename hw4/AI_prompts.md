@@ -439,3 +439,58 @@ finish `output/harness.md` so it clearly explains how the system works. include:
 * the system specifications, including loop limits, result limits, models, and how to run the frontend and backend
 ```
 
+---
+
+## Problem 13 — Push to GitHub and Submit the URL
+
+**Prompt 1 (initial):**
+
+````
+problem 13: push to github and submit the url
+put your code in a folder named `hw4` and push it to a public github repository. on canvas, submit the repository url.  the link that graders can open and clone. do not upload a zip file for this homework.
+do not put your real `.env` file, `campus_customs.db`, or product images in the github repository. use `.gitignore` to exclude them. include an `.env.example` file with placeholders only.
+expected file layout
+
+```
+hw4/
+├── AI_prompts.md
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── README.md
+├── frontend/                 # vite react typescript app
+├── backend/
+│   ├── main.py               # fastapi app
+│   ├── agent.py
+│   ├── models.py
+│   ├── tools.py
+│   └── prompts/
+│       └── prompt.md
+└── output/
+    ├── harness.md
+    ├── design.md
+    ├── usability.md
+    ├── app_check.html
+    ├── app_check_images/     # screenshots linked from app_check.html
+    └── audit_trail.json
+```
+
+local-only data
+the following files should exist locally but should not be committed to git:
+
+```
+data/
+├── campus_customs.db
+└── products/                 # images referenced by the catalogue
+```
+
+the agent itself consists of these four files under `backend/`:
+
+* `prompts/prompt.md`
+* `agent.py`
+* `tools.py`
+* `models.py`
+
+`readme.md` should explain how to run the frontend and backend after placing the local data pack in the project.
+````
+
