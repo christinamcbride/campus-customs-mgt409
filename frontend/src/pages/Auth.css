@@ -1,17 +1,27 @@
 .auth-wrap { display: flex; justify-content: center; }
+/* The form is an order slip: fresh stock, brass rule at the head. */
 .auth-card {
-  width: 100%; max-width: 480px;
-  background: var(--white); border: 1px solid var(--cream-200);
-  border-radius: var(--radius-lg); padding: 36px; box-shadow: var(--shadow-sm);
+  width: 100%; max-width: 470px;
+  background: var(--stock-white);
+  border: 1px solid var(--stock-deep);
+  border-radius: var(--radius-md);
+  padding: clamp(26px, 5vw, 40px);
+  box-shadow: var(--lift-sm);
 }
-.auth-card h1 { font-size: 1.8rem; margin-bottom: 6px; }
-.auth-card > .muted { margin-bottom: 26px; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.field-err { color: var(--danger-700); font-size: .83rem; margin: 6px 0 0; }
-.auth-submit { width: 100%; padding: 13px; margin-top: 6px; }
-.auth-alt { text-align: center; font-size: .92rem; margin: 22px 0 0; color: var(--ink-muted); }
+.auth-card h1 { font-size: clamp(1.7rem, 3.4vw, 2.2rem); margin-bottom: 8px; }
+/* The head of the slip is ruled off, the way a form is printed. */
+.auth-card > .muted { border-bottom: 1px solid var(--stock-deep); padding-bottom: 22px; }
+.auth-card > .muted { margin-bottom: 26px; font-size: 0.94rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.field-err { color: var(--danger); font-size: 0.84rem; margin: 7px 0 0; }
+.auth-submit { width: 100%; padding: 14px; margin-top: 8px; }
+.auth-alt {
+  text-align: center; font-size: 0.92rem;
+  margin: 24px 0 0; padding-top: 20px;
+  border-top: 1px solid var(--stock-deep);
+  color: var(--ink-muted);
+}
 
 @media (max-width: 520px) {
-  .auth-card { padding: 26px 20px; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
 }

@@ -12,7 +12,6 @@ export default function About() {
     <>
       <section className="about-hero">
         <div className="page">
-          <p className="eyebrow">About Us</p>
           <h1>Half a century of outfitting the Elm City.</h1>
           <p className="about-lede">
             Campus Customs has sold Yale gear from the same New Haven block since 1973.

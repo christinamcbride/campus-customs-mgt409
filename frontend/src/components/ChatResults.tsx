@@ -30,9 +30,8 @@ export default function ChatResults() {
       <div className="page">
         <div className="chat-results-head">
           <div>
-            <p className="eyebrow">From your conversation</p>
             <h2 id="chat-results-heading">
-              {matchedFor ? <>Matches for “{matchedFor}”</> : 'Matching products'}
+              {matchedFor ? <>Pulled for “{matchedFor}”</> : 'Pulled from the counter'}
             </h2>
             <p className="muted chat-results-count" role="status" aria-live="polite">
               {products.length} {products.length === 1 ? 'product' : 'products'} the

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
+import Icon from './Icon'
 import './NavBar.css'
 
 const LINKS = [
@@ -49,10 +50,12 @@ export default function NavBar() {
     <header className="nav">
       <div className="nav-inner page">
         <NavLink to="/" className="brand" aria-label="Campus Customs — home">
-          <span className="brand-mark" aria-hidden="true">CC</span>
+          <span className="brand-mark" aria-hidden="true">
+            <Icon name="registration" size={30} strokeWidth={1.4} />
+          </span>
           <span className="brand-text">
-            <strong>Campus Customs</strong>
-            <small>New Haven, est. 1973</small>
+            <strong>Campus&nbsp;Customs</strong>
+            <small>Printed in New Haven · Est. 1973</small>
           </span>
         </NavLink>
 
@@ -63,7 +66,7 @@ export default function NavBar() {
           aria-controls="primary-navigation"
           onClick={() => setOpen((v) => !v)}
         >
-          <span aria-hidden="true">{open ? '✕' : '☰'}</span>
+          <Icon name={open ? 'close' : 'menu'} size={22} />
           <span className="sr-only">{open ? 'Close menu' : 'Open menu'}</span>
         </button>
 

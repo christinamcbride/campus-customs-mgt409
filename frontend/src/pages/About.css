@@ -1,34 +1,88 @@
-.about-hero { background: var(--navy-900); color: var(--cream-100); padding: 64px 0 56px; }
-.about-hero h1 { color: var(--white); max-width: 18ch; }
-.about-lede { max-width: 62ch; font-size: 1.1rem; color: var(--navy-100); margin: 0; }
+.about-hero {
+  background: var(--ink-press);
+  color: var(--stock-warm);
+  padding: clamp(52px, 8vw, 86px) 0 clamp(44px, 6vw, 68px);
+  border-bottom: 3px solid var(--brass);
+  position: relative;
+  overflow: hidden;
+}
+.about-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(246,241,230,0.15) 1.1px, transparent 1.3px);
+  background-size: 6px 6px;
+  mask-image: radial-gradient(120% 110% at 85% 0%, #000 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(120% 110% at 85% 0%, #000 0%, transparent 70%);
+}
+.about-hero .page { position: relative; z-index: 1; }
+.about-hero h1 { color: var(--stock-white); max-width: 17ch; }
+.about-lede {
+  max-width: 60ch;
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  color: rgba(246,241,230,0.86);
+  margin: 0;
+}
 
 .about-body {
-  display: grid; grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 52px; padding-top: 52px; padding-bottom: 72px; align-items: start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: clamp(34px, 5vw, 60px);
+  padding-top: clamp(40px, 6vw, 62px);
+  padding-bottom: clamp(52px, 8vw, 86px);
+  align-items: start;
 }
 .about-main { max-width: 68ch; }
-.about-main h2 { margin-top: 34px; }
-.about-main h2:first-child { margin-top: 0; }
+.about-main h2 {
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: var(--rule-ink);
+  font-size: clamp(1.3rem, 2.2vw, 1.75rem);
+}
+.about-main h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.about-main p { color: var(--ink-body); }
 .about-close {
-  margin-top: 30px; padding-top: 20px;
-  border-top: 1px solid var(--cream-200); color: var(--ink-muted);
+  margin-top: 34px; padding-top: 20px;
+  border-top: 1px solid var(--stock-deep);
+  color: var(--ink-muted);
 }
 
+/* The sidebar is the shop's imprint block, as a colophon would be set. */
 .about-aside {
-  position: sticky; top: calc(var(--nav-height) + 20px);
-  background: var(--cream-100); border: 1px solid var(--cream-200);
-  border-radius: var(--radius-lg); padding: 24px;
+  position: sticky; top: calc(var(--nav-height) + 22px);
+  background: var(--stock-white);
+  border: 1px solid var(--stock-deep);
+  border-radius: var(--radius-md);
+  padding: 26px;
 }
-.aside-title { font-size: 1.05rem; margin-bottom: 14px; }
-.facts { margin: 0 0 22px; }
-.fact { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--cream-200); }
+.aside-title {
+  font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase;
+  font-family: var(--font-body);
+  font-variation-settings: 'wght' 650;
+  color: var(--ink-soft);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ink-press);
+}
+.facts { margin: 0 0 24px; }
+.fact {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--stock-warm);
+}
 .fact:last-child { border-bottom: none; }
-.fact dt { color: var(--ink-muted); font-size: .88rem; }
-.fact dd { margin: 0; font-family: var(--font-display); font-weight: 600; color: var(--navy-900); }
-.visit h3 { font-size: .95rem; margin-bottom: 6px; }
-.visit p { font-size: .9rem; color: var(--ink-muted); margin: 0; }
+.fact dt { color: var(--ink-muted); font-size: 0.85rem; }
+.fact dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-variation-settings: var(--wonk-text), 'opsz' 24, 'wght' 700;
+  color: var(--ink-press);
+  font-size: 1.05rem;
+}
+.visit { padding-top: 18px; border-top: 1px solid var(--stock-deep); }
+.visit h3 { font-size: 0.95rem; margin-bottom: 7px; }
+.visit p { font-size: 0.89rem; color: var(--ink-muted); margin: 0; }
 
-@media (max-width: 880px) {
-  .about-body { grid-template-columns: 1fr; gap: 34px; }
+@media (max-width: 900px) {
+  .about-body { grid-template-columns: 1fr; }
   .about-aside { position: static; }
 }

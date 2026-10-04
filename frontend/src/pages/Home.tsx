@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { fetchProducts } from '../api'
+import Icon from '../components/Icon'
 import type { Product } from '../types'
 import './Home.css'
 
@@ -41,24 +42,37 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="page hero-inner">
-          <p className="eyebrow">New Haven · Est. 1973</p>
-          <h1>Yale gear, made a few blocks from the Green.</h1>
-          <p className="hero-lede">
-            Sweatshirts, tees, and quarter-zips for students, families, and alumni who
-            want the real thing — pressed and stitched in our own shop on Broadway,
-            not ordered from a catalogue.
+          <h1 className="ink-set">
+            We print it<span className="hero-break"> </span>
+            <em>here.</em>
+          </h1>
+          <p className="hero-lede ink-set" style={{ '--ink-delay': '110ms' } as React.CSSProperties}>
+            Yale sweatshirts, tees and quarter-zips pulled on our own screens on
+            Broadway — the same block, the same family, since 1973.
           </p>
-          <div className="hero-actions">
-            <Link className="btn btn-primary" to="/products">Shop the collection</Link>
+          <div
+            className="hero-actions ink-set"
+            style={{ '--ink-delay': '200ms' } as React.CSSProperties}
+          >
+            <Link className="btn btn-primary" to="/products">
+              Shop the collection
+              <Icon name="arrow-right" size={15} strokeWidth={2} />
+            </Link>
             <Link className="btn btn-outline hero-secondary" to="/about">Our story</Link>
           </div>
+
+          <dl className="press-run ink-set" style={{ '--ink-delay': '290ms' } as React.CSSProperties}>
+            <div><dt>On press since</dt><dd>1973</dd></div>
+            <div><dt>Styles in the run</dt><dd>102</dd></div>
+            <div><dt>Printed &amp; stitched</dt><dd>In house</dd></div>
+          </dl>
         </div>
       </section>
 
       <section className="page section">
         <div className="section-head">
           <h2>Fresh off the press</h2>
-          <Link to="/products">See everything →</Link>
+          <Link to="/products">See everything <Icon name="arrow-right" size={13} strokeWidth={2} /></Link>
         </div>
         {featured === null ? (
           <div className="grid">
@@ -83,27 +97,34 @@ export default function Home() {
 
       <section className="promises">
         <div className="page">
-          <h2 className="promises-title">Why shop with us</h2>
-          <div className="promise-grid">
-            {PROMISES.map((p) => (
-              <div key={p.title} className="promise">
-                <h3>{p.title}</h3>
-                <p>{p.body}</p>
-              </div>
-            ))}
+          <div className="promise-sheet">
+            <h2 className="promises-title">
+              What you get from a shop that owns its presses
+            </h2>
+            <div className="promise-rows">
+              {PROMISES.map((p) => (
+                <div key={p.title} className="promise">
+                  <h3>{p.title}</h3>
+                  <p>{p.body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="page section cta-band">
-        <div>
-          <h2>Not sure what you want?</h2>
-          <p className="muted">
-            Ask our shopping assistant, bottom right. It reads straight from our stock
-            list, so it will tell you what is actually on the shelf — and what is not.
-          </p>
+      <section className="page section">
+        <div className="cta-band">
+          <Icon name="squeegee" size={36} strokeWidth={1.3} className="cta-mark" />
+          <div>
+            <h2>Not sure what you are after?</h2>
+            <p className="muted">
+              Ask the counter, bottom right. It reads our actual stock list, so it
+              will tell you what is on the shelf — and what has sold through.
+            </p>
+          </div>
+          <Link className="btn btn-primary" to="/products">Start browsing</Link>
         </div>
-        <Link className="btn btn-primary" to="/products">Start browsing</Link>
       </section>
     </>
   )

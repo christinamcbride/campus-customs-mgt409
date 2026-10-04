@@ -1,12 +1,44 @@
-.footer { background: var(--navy-900); color: var(--navy-100); margin-top: 64px; }
-.footer-inner {
-  display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between;
-  padding-top: 40px; padding-bottom: 28px;
+.footer {
+  background: var(--ink-press);
+  color: rgba(246, 241, 230, 0.8);
+  margin-top: clamp(48px, 7vw, 80px);
+  border-top: 3px solid var(--brass);
+  position: relative;
+  overflow: hidden;
 }
-.footer-brand { font-family: var(--font-display); color: var(--white); font-size: 1.1rem; display: block; margin-bottom: 6px; }
-.footer-inner p { max-width: 38ch; font-size: .92rem; margin: 0; }
-.footer-inner ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
-.footer-inner a { color: var(--navy-100); text-decoration: none; font-size: .92rem; }
-.footer-inner a:hover { color: var(--white); text-decoration: underline; }
-.footer-note { border-top: 1px solid rgba(255,255,255,.14); padding-top: 16px; padding-bottom: 24px; }
-.footer-note p { font-size: .8rem; color: var(--navy-300); margin: 0; }
+.footer::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(246,241,230,0.1) 1px, transparent 1.2px);
+  background-size: 6px 6px;
+}
+.footer-inner {
+  position: relative; z-index: 1;
+  display: flex; flex-wrap: wrap; gap: 36px; justify-content: space-between;
+  padding-top: 44px; padding-bottom: 30px;
+}
+.footer-brand {
+  font-family: var(--font-display);
+  font-variation-settings: var(--wonk-display), 'opsz' 48, 'wght' 700;
+  color: var(--stock-white);
+  font-size: 1.28rem;
+  display: block;
+  margin-bottom: 8px;
+}
+.footer-inner p { max-width: 40ch; font-size: 0.9rem; margin: 0; }
+.footer-inner ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.footer-inner a {
+  color: rgba(246, 241, 230, 0.82);
+  text-decoration: none;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variation-settings: 'wght' 550;
+}
+.footer-inner a:hover { color: var(--stock-white); text-decoration: underline; text-decoration-color: var(--brass); }
+.footer-note {
+  position: relative; z-index: 1;
+  border-top: 1px solid rgba(246,241,230,0.16);
+  padding-top: 18px; padding-bottom: 26px;
+}
+.footer-note p { font-size: 0.78rem; color: rgba(246,241,230,0.55); margin: 0; }

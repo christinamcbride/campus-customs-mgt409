@@ -321,3 +321,27 @@ for each improvement, explain:
 make sure all four improvements actually appear in the running app. the graders will read the write-up and look for the features.
 ```
 
+---
+
+## Problem 10 — Style the Website
+
+**Prompt 1 (initial):**
+
+```
+problem 10: style the website. add creative design so the site feels like a real campus customs storefront. focus on things like:
+
+* fonts
+* color
+* visual hierarchy
+* motion
+* product presentation
+* the chat experience
+
+use an imaginative and innovative design. write `output/design.md` and briefly explain:
+
+* what you changed
+* why the changes should encourage customers to stay on the site and buy
+
+keep the explanation concrete and short.
+```
+

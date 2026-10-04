@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ApiError, fetchChatHistory, formatPrice, sendChatMessage } from '../api'
 import { useAuth } from '../auth'
+import Icon from './Icon'
 import { useChatResults } from '../chatResults'
 import type { PageContext, Product } from '../types'
 import './ChatWidget.css'
@@ -18,8 +19,8 @@ const GREETING: Message = {
   id: 'greeting',
   role: 'assistant',
   content:
-    "Hi! I'm the Campus Customs shopping assistant. Ask me about our Yale gear — " +
-    'styles, prices, or what sizes are in stock.',
+    "Afternoon — you're through to the counter at Campus Customs. Ask me about " +
+    'any of our Yale gear: styles, prices, or what sizes are still on the shelf.',
 }
 
 let messageSeq = 0
@@ -243,7 +244,7 @@ export default function ChatWidget() {
         aria-controls="chat-panel"
         onClick={() => setOpen((v) => !v)}
       >
-        <span aria-hidden="true">{open ? '✕' : '💬'}</span>
+        <Icon name={open ? 'close' : 'chat'} size={23} strokeWidth={1.7} />
         <span className="sr-only">
           {open ? 'Close shopping assistant' : 'Open shopping assistant'}
         </span>
@@ -259,9 +260,11 @@ export default function ChatWidget() {
       >
         <div className="chat-header">
           <div>
-            <strong>Shopping Assistant</strong>
+            <strong>The Counter</strong>
             <span className="chat-status">
-              {user ? `Signed in as ${user.first_name ?? user.name}` : 'Ask about our Yale gear'}
+              {user
+                ? `Order desk · ${user.first_name ?? user.name}`
+                : 'Ask us what is on the shelf'}
             </span>
           </div>
           <button
@@ -271,7 +274,7 @@ export default function ChatWidget() {
               launcherRef.current?.focus()
             }}
           >
-            <span aria-hidden="true">✕</span>
+            <Icon name="close" size={17} strokeWidth={1.8} />
             <span className="sr-only">Close shopping assistant</span>
           </button>
         </div>
@@ -298,7 +301,7 @@ export default function ChatWidget() {
           {showStarters && (
             <div className="chat-starters">
               <p className="chat-starters-label" id="starters-label">
-                Try asking:
+                Ask the counter
               </p>
               <div role="group" aria-labelledby="starters-label">
                 {starters.map((s) => (
@@ -325,7 +328,7 @@ export default function ChatWidget() {
             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Ask about sizes, prices, or styles…"
+            placeholder="Sizes, prices, what's in stock…"
             autoComplete="off"
             maxLength={2000}
             disabled={pending}
