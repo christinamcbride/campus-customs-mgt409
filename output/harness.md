@@ -937,4 +937,299 @@ neither pays for the other's fields.
 
 ---
 
-*Last updated: Problem 9 — usability improvements.*
+---
+
+## 16. Audit Trail (Problem 12)
+
+Every tool call and every end of an agent run is appended to
+**`output/audit_trail.json`**.
+
+### Format: JSON Lines, genuinely append-only
+
+One JSON object per line. Not a single JSON array, because an array has to be
+re-read and rewritten on every entry — which is the opposite of append-only,
+and loses the whole file if the process dies mid-write. The file is opened only
+in `"a"` mode; nothing in the project truncates, rewrites or deletes it.
+
+Read it with one `json.loads` per line:
+
+```python
+import json
+entries = [json.loads(line) for line in open("output/audit_trail.json")]
+```
+
+### What each entry records
+
+| Field | Tool call | End of run |
+|---|---|---|
+| `time` | UTC ISO-8601 | UTC ISO-8601 |
+| `event` | `tool_call` | `agent_run` |
+| `tool` | the tool's name | `null` |
+| `arguments` | summarised and redacted | — |
+| `result` | one line, e.g. `ProductSearchResult(matches=1)` | — |
+| `duration_ms` | how long the tool took | — |
+| `tool_calls` / `model_requests` | — | counts for the whole run |
+| `products_returned` | — | cards handed to the page |
+| `stop_reason` | `ok` or `error` | see below |
+
+Example of two real lines, lightly wrapped:
+
+```
+{"time":"2026-10-04T19:54:55+00:00","event":"tool_call","tool":"check_size_availability",
+ "user_id":1,"arguments":{"product_id":"morse-1-4-zip"},
+ "result":"InventoryResult(units=52)","duration_ms":0,"stop_reason":"ok"}
+{"time":"2026-10-04T19:54:57+00:00","event":"agent_run","tool":null,"user_id":1,
+ "tool_calls":2,"model_requests":3,"products_returned":1,"stop_reason":"completed"}
+```
+
+### Stop reasons
+
+| `stop_reason` | Meaning |
+|---|---|
+| `completed` | The agent produced an answer normally |
+| `limit_exceeded` | The loop hit its request or tool-call ceiling and was stopped |
+| `content_filter` | The provider rejected the prompt |
+| `rate_limited` | The provider was over its rate limit |
+| `provider_error` | Any other upstream failure |
+| `ok` / `error` | On a tool call: whether it returned or raised |
+
+### What is never written
+
+A redaction pass runs over every argument and result at any nesting depth.
+These keys are replaced with `[redacted]`: `password`, `confirm_password`,
+`password_hash`, `token`, `api_key`, `portkey_api_key`, `jwt_secret`, `secret`,
+`authorization`, `cookie`, `session`, and also `email`, `name`, `first_name`,
+`last_name`. Values are clipped to 160 characters and lists to three items plus
+a count.
+
+**Customers appear only as a numeric `user_id`** — never a name or email. A
+guest is `null`.
+
+Verified by scanning the whole trail for `password`, `api_key`, `token`,
+`secret`, `pbkdf2`, the test user's email and the test user's name: zero hits.
+
+Auditing never breaks a reply — `_append` catches and logs any failure rather
+than raising. Writes are serialised with a lock, since FastAPI runs sync
+endpoints on a threadpool.
+
+Every tool is wrapped by one `@_audited` decorator applied in
+`register_tools`, so a tool cannot be added without being audited.
+
+---
+
+## 17. System Reference
+
+A single place covering the model fields, the tools, the safety rules and the
+operating limits.
+
+### 17.1 Model fields in `models.py`, and why
+
+#### `SizeStock` — stock for one size
+
+| Field | Why it exists |
+|---|---|
+| `size`, `quantity` | The raw facts from `inventory` |
+| `in_stock` | **Stated, not inferred.** The model never has to compare a quantity to zero, so it cannot describe a size as available by misreading one |
+| `low_stock` | Flags ≤3 units, so "only 2 left in S" needs no arithmetic |
+
+#### `ProductCard` — what the *page* renders
+
+`product_id`, `name`, `garment_type`, `category`, `description`, `colors`,
+`search_tags`, `image_url`, `price`, `total_stock`, `description_available`.
+
+Chosen so a card needs **no second request**: `image_url` for the picture,
+`name`, `price` and `description` for the text, `product_id` for the detail
+link. `price` is required rather than defaulted, so a malformed row fails
+loudly instead of rendering "$0.00". `description_available` is false for the
+three catalogue rows holding a generated placeholder, so neither the page nor
+the agent presents machine text as a description.
+
+#### `ProductSummary` — what the *model* sees
+
+`product_id`, `name`, `category`, `price`, `colors`, `description`, `in_stock`,
+`description_available`.
+
+Deliberately smaller. It drops `search_tags` (a retrieval mechanism, not
+shopper-facing) and `image_url` (the page renders that itself), and trims the
+description. That is a **51% token reduction** per search, while the page still
+gets full cards through `ShopContext.shown_products`. The model and the page
+having different views of a product is the point: each gets what it needs and
+pays for nothing else.
+
+#### `ProductSearchResult`
+
+| Field | Why |
+|---|---|
+| `query` | Echoes what was searched, so a miss can be described accurately |
+| `match_count` | The real total, which can exceed the 8 returned — lets the agent say "we have 27 hoodies" while showing eight |
+| `matches` | `ProductSummary` objects |
+| `note` | **Only set when nothing matched**, stating plainly that the shop does not carry it. An empty list is easy to paper over; a sentence is not |
+
+#### `InventoryResult` — the honesty workhorse
+
+`available_sizes` and `sold_out_sizes` are **two separate lists rather than one
+flat list with a flag**, so the agent cannot report what is available without
+also being handed what is gone. Alongside them: `available_size_labels`,
+`sold_out_size_labels` and `low_stock_size_labels` as plain letters
+(reformatting objects into prose is where a size gets dropped);
+`sizes_available_count` / `sizes_sold_out_count` for "5 of 6 sizes";
+`units_in_stock`; `fully_sold_out` as a stated boolean; and `stock_statement`,
+a ready-made sentence the prompt forbids contradicting.
+
+#### `StockSummary` — "how many do you have?"
+
+`scope` (`product` or `shop`) so a shop-wide figure cannot be presented as one
+item's stock, plus `units_in_stock`, `products_counted`,
+`products_with_stock`, `products_with_a_sold_out_size`, and the size labels.
+
+#### `LookupFailure`
+
+`reason` is written as an instruction to the agent — "Do not describe this
+product; search for it by name instead" — because a bare null is something a
+model will fill in.
+
+#### `AccountInfo`
+
+`signed_in`, `first_name`, `last_name`, `full_name`, `email`, `member_since`,
+`note`. Contains **no password material of any kind**, and is scoped to
+whoever is chatting.
+
+#### `PageContext`, `ChatRequest`, `ChatResponse`, `ChatMessage`
+
+`PageContext` accepts only `path` and `product_id` — never a product's claimed
+name or price — so a page cannot assert a false fact and have the agent repeat
+it. `ChatResponse` returns `reply`, `products` and `matched_for`, which is the
+whole contract the frontend renders from.
+
+#### `ShopContext` — the agent's dependencies
+
+Carries the open connection, the signed-in shopper's `user_id`, names, email
+and join date, and the product being viewed. **`password_hash` is never loaded
+into it** and no tool can reach one. Two side channels are filled during a run:
+`shown_products` (the cards the page will display) and `last_query` (the label
+for them).
+
+### 17.2 Tools and agent abilities
+
+| Tool | Ability | Returns |
+|---|---|---|
+| `search_products` | Find products by words, category, colour, price range, in-stock | `ProductSearchResult` |
+| `get_product_details` | Full description, colours and every size for one product | `ProductSummaryDetail` or `LookupFailure` |
+| `check_size_availability` | Which sizes are in stock and which are sold out | `InventoryResult` or `LookupFailure` |
+| `get_stock_summary` | Unit counts for one product or the whole shop | `StockSummary` or `LookupFailure` |
+| `list_categories` | Real categories and price range | counts from the catalogue |
+| `get_my_account` | The current shopper's own name, email, join date | `AccountInfo` |
+
+Beyond the tools, the agent can: hold a conversation across turns for a
+signed-in shopper (12 turns replayed), resolve "this"/"it" to the product page
+being viewed, greet a signed-in shopper by first name, and surface the products
+it retrieved onto the page as cards.
+
+Two things it **cannot** do, structurally rather than by instruction:
+
+- **Quote an unverified price.** An output validator checks every dollar figure
+  in a reply against prices actually retrieved that turn and raises
+  `ModelRetry` on a mismatch, so the model must correct itself first.
+- **Put a product on the page it did not look up.** Cards come from what the
+  tools recorded, not from parsing the reply text.
+
+Colour matching uses a synonym table, because the catalogue spells colours
+inconsistently — "grey" matches `heather gray`, `charcoal gray`, `dark heather
+gray` and the rest, 50 products rather than 3. Search also tries singular and
+plural forms, after `"hoodies"` was found to match 0 products while
+`"hoodie"` matched 27.
+
+### 17.3 Safety rules
+
+The full set lives in **`backend/prompts/prompt.md`** under *Safety rules*,
+grouped as Accuracy, Secrets and privacy, Instructions and boundaries, Data
+handling, Conduct, and Operations. Several are enforced in code rather than
+trusted to the prompt:
+
+| Rule | How it is enforced |
+|---|---|
+| Database is the source of truth | Tools are the only way to obtain product data |
+| Never state an unverified price | Output validator rejects the reply and retries |
+| Say when something cannot be found | Tools return an explicit `note` / `LookupFailure` |
+| Never claim availability unchecked | Availability only comes from an inventory lookup |
+| No secrets in responses | `password_hash` is never loaded into `ShopContext`; no tool exposes it |
+| No cross-customer data | History and account tools are scoped to the session's `user_id`; there is no parameter to name another account |
+| Parameterized queries only | Every `execute()` binds `?` parameters; no user input is concatenated into SQL |
+| Validate tool inputs | Pydantic types on tool arguments; ids are looked up and fail closed |
+| Return only needed fields | `ProductSummary` to the model, `ProductCard` to the page |
+| Limit result size | 8 products per search |
+| Audit without secrets | Redaction pass over keys and values; users logged as a numeric id |
+| Stop at configured limits | `UsageLimits(request_limit=6, tool_calls_limit=10)`, recorded as `limit_exceeded` |
+
+Live-model spot checks: a prompt-injection "SYSTEM OVERRIDE" request was
+refused; a legal-advice question was declined with a pointer to a real
+resource; a request for another customer's chat history was refused. Each
+refusal was polite and offered what the assistant can do instead.
+
+### 17.4 System specifications
+
+**Models**
+
+| Setting | Value |
+|---|---|
+| Model | `gpt-4o-mini` (`AI_MODEL`) |
+| Gateway | `https://api.portkey.ai/v1` (`AI_BASE_URL`), OpenAI-compatible |
+| Resolves to | Azure OpenAI behind Portkey, with its own content filter |
+| Auth | `PORTKEY_API_KEY` |
+| Library | `pydantic-ai-slim` 2.54.0 |
+
+**Loop limits**
+
+| Limit | Value | Effect |
+|---|---|---|
+| `request_limit` | 6 | Model requests per message; exceeding stops the loop |
+| `tool_calls_limit` | 10 | Tool calls per message |
+| `retries` | 2 | Retries per tool/validator failure |
+| On exceeding | — | Run stops, 503 to the shopper, `limit_exceeded` in the audit trail |
+
+**Result limits**
+
+| Limit | Value |
+|---|---|
+| Products per search returned to the model | 8 |
+| Rows scanned per query | 120 |
+| Message length | 1–2000 characters |
+| Conversation turns replayed to the model | 12 |
+| Turns returned to the chat panel | 20 |
+| Audit value length / list length | 160 chars / 3 items |
+| Summary description length | 130 characters |
+
+**Security settings**
+
+| Setting | Value |
+|---|---|
+| Password hashing | PBKDF2-HMAC-SHA256, 240,000 iterations, 16-byte salt |
+| Legacy (seeded) hashes | 120,000 iterations, upgraded on successful login |
+| Session cookie | `cc_session`, HttpOnly, SameSite=Lax, 7 days |
+| Password length | 8–200 characters |
+
+**How to run**
+
+Backend, from the `backend/` folder:
+
+```
+uvicorn main:app --reload --port 8000
+```
+
+Frontend, from the `frontend/` folder:
+
+```
+npm install && npm run dev
+```
+
+Then open **http://localhost:5174**. Vite proxies `/api` to port 8000, so both
+must be running. `data/` must be present at the project root; it is not in git.
+The key goes in `PORTKEY_API_KEY.env` at the project root, or as an exported
+`PORTKEY_API_KEY` environment variable, which takes precedence.
+
+Health check: <http://127.0.0.1:8000/api/health> reports whether the database,
+the product images and the API key are all present.
+
+---
+
+*Last updated: Problem 12 — audit trail, safety rules, and system reference.*

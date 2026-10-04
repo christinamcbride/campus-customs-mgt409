@@ -8,9 +8,13 @@ silence it might fill in.
 
 from __future__ import annotations
 
+import functools
 import logging
+import time
 
 from pydantic_ai import RunContext
+
+import audit
 
 import db
 from models import (
@@ -126,10 +130,45 @@ def _stock_statement(name: str, available: list[SizeStock], sold_out: list[SizeS
     return line
 
 
+def _audited(fn):
+    """Record a tool call in the append-only audit trail.
+
+    Applied to every tool below, so a new tool cannot be added without being
+    audited. Arguments and results are summarised and redacted by `audit`;
+    the trail never holds a secret or a customer's personal details.
+    """
+
+    @functools.wraps(fn)
+    def wrapper(ctx: RunContext[ShopContext], *args, **kwargs):
+        started = time.monotonic()
+        try:
+            result = fn(ctx, *args, **kwargs)
+        except Exception as exc:
+            audit.record_tool_call(
+                tool=fn.__name__,
+                arguments=kwargs,
+                user_id=ctx.deps.user_id,
+                error=type(exc).__name__,
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
+            raise
+        audit.record_tool_call(
+            tool=fn.__name__,
+            arguments=kwargs,
+            result=audit.summarise_result(result),
+            user_id=ctx.deps.user_id,
+            duration_ms=int((time.monotonic() - started) * 1000),
+        )
+        return result
+
+    return wrapper
+
+
 def register_tools(agent) -> None:
     """Attach every shop tool to the agent."""
 
     @agent.tool
+    @_audited
     def search_products(
         ctx: RunContext[ShopContext],
         query: str,
@@ -213,6 +252,7 @@ def register_tools(agent) -> None:
         )
 
     @agent.tool
+    @_audited
     def get_product_details(
         ctx: RunContext[ShopContext], product_id: str
     ) -> ProductSummaryDetail | LookupFailure:
@@ -240,6 +280,7 @@ def register_tools(agent) -> None:
         )
 
     @agent.tool
+    @_audited
     def check_size_availability(
         ctx: RunContext[ShopContext], product_id: str
     ) -> InventoryResult | LookupFailure:
@@ -284,6 +325,7 @@ def register_tools(agent) -> None:
         )
 
     @agent.tool
+    @_audited
     def get_stock_summary(
         ctx: RunContext[ShopContext], product_id: str | None = None
     ) -> StockSummary | LookupFailure:
@@ -347,6 +389,7 @@ def register_tools(agent) -> None:
         )
 
     @agent.tool
+    @_audited
     def get_my_account(ctx: RunContext[ShopContext]) -> AccountInfo:
         """The signed-in shopper's own name, email and join date.
 
@@ -374,6 +417,7 @@ def register_tools(agent) -> None:
         )
 
     @agent.tool
+    @_audited
     def list_categories(ctx: RunContext[ShopContext]) -> dict[str, object]:
         """The product categories the shop carries, and the real price range.
 

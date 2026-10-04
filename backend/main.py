@@ -14,6 +14,8 @@ import sqlite3
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic_ai.exceptions import UsageLimitExceeded
+from pydantic_ai.usage import UsageLimits
 from pydantic_ai.messages import (
     ModelMessage,
     ModelRequest,
@@ -22,6 +24,7 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 
+import audit
 import db
 import routes_auth
 import routes_catalogue
@@ -66,6 +69,11 @@ HISTORY_LIMIT = 20
 # Turns replayed into the model so it remembers the conversation. Kept small
 # so a long history cannot crowd out the system prompt or inflate cost.
 MEMORY_TURNS = 12
+
+# Hard ceiling on the agent loop for a single message. Without this a model
+# that keeps calling tools could loop until it times out or runs up a bill.
+# Exceeding either limit stops the loop and is recorded in the audit trail.
+CHAT_LIMITS = UsageLimits(request_limit=6, tool_calls_limit=10)
 
 
 def _save_message(
@@ -181,13 +189,42 @@ async def chat(
                 )
 
     try:
-        result = await agent.run(message, deps=deps, message_history=memory)
+        result = await agent.run(
+            message,
+            deps=deps,
+            message_history=memory,
+            usage_limits=CHAT_LIMITS,
+        )
+    except UsageLimitExceeded as exc:
+        # The loop hit its configured ceiling. Recorded, then reported plainly.
+        log.warning("Agent loop stopped at its limit: %s", exc)
+        audit.record_run(
+            stop_reason="limit_exceeded",
+            user_id=deps.user_id,
+            products_returned=len(deps.shown_products),
+            detail=str(exc),
+        )
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "That took more steps than I'm allowed for one question. Try "
+            "asking about one product at a time.",
+        ) from None
     except Exception as exc:
         # Never leak provider errors to the browser: they can echo the request
         # payload and name the upstream provider. Log the detail, return a
         # short message that tells the shopper whether retrying is worthwhile.
         log.exception("Agent run failed")
         detail = str(exc).lower()
+        audit.record_run(
+            stop_reason=(
+                "content_filter" if "content_filter" in detail
+                else "rate_limited" if ("rate" in detail and "limit" in detail)
+                else "provider_error"
+            ),
+            user_id=deps.user_id,
+            products_returned=len(deps.shown_products),
+            detail=type(exc).__name__,
+        )
         if "content_filter" in detail or "content management policy" in detail:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
@@ -206,6 +243,15 @@ async def chat(
 
     reply = result.output
     products = deps.shown_products
+
+    usage = result.usage
+    audit.record_run(
+        stop_reason="completed",
+        user_id=deps.user_id,
+        tool_calls=getattr(usage, "tool_calls", None),
+        requests=getattr(usage, "requests", None),
+        products_returned=len(products),
+    )
 
     if user:
         _save_message(conn, user["id"], "user", message)
