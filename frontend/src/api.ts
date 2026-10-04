@@ -43,6 +43,7 @@ export interface ProductQuery {
   minPrice?: number
   maxPrice?: number
   inStockOnly?: boolean
+  sort?: string
   limit?: number
   offset?: number
 }
@@ -54,6 +55,7 @@ export function fetchProducts(q: ProductQuery = {}, signal?: AbortSignal) {
   if (q.minPrice != null) p.set('min_price', String(q.minPrice))
   if (q.maxPrice != null) p.set('max_price', String(q.maxPrice))
   if (q.inStockOnly) p.set('in_stock_only', 'true')
+  if (q.sort && q.sort !== 'name') p.set('sort', q.sort)
   p.set('limit', String(q.limit ?? 48))
   p.set('offset', String(q.offset ?? 0))
   return request<ProductPage>(`/api/products?${p}`, { signal })

@@ -7,11 +7,21 @@ import './Products.css'
 
 const PAGE_SIZE = 24
 
+// Bands chosen to line up with the shop's real price tiers: tees at $32,
+// crewnecks at $58, hoodies at $68, quarter-zips at $72, jackets at $98.
+const PRICE_BANDS = [
+  { label: 'Under $40', max: 40 },
+  { label: 'Under $60', max: 60 },
+  { label: 'Under $75', max: 75 },
+]
+
 export default function Products() {
   const [params, setParams] = useSearchParams()
   const search = params.get('search') ?? ''
   const category = params.get('category') ?? 'All'
   const inStockOnly = params.get('in_stock') === '1'
+  const sort = params.get('sort') ?? 'name'
+  const maxPrice = params.get('max_price')
 
   const [draft, setDraft] = useState(search)
   const [items, setItems] = useState<Product[]>([])
@@ -57,7 +67,15 @@ export default function Products() {
     setLoading(true)
     setError(null)
     fetchProducts(
-      { search, category, inStockOnly, limit: 120, offset: 0 },
+      {
+        search,
+        category,
+        inStockOnly,
+        sort,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        limit: 120,
+        offset: 0,
+      },
       ctrl.signal,
     )
       .then((page) => {
@@ -79,7 +97,7 @@ export default function Products() {
         if (!ctrl.signal.aborted) setLoading(false)
       })
     return () => ctrl.abort()
-  }, [search, category, inStockOnly])
+  }, [search, category, inStockOnly, sort, maxPrice])
 
   const shown = useMemo(() => items.slice(0, visible), [items, visible])
 
@@ -90,7 +108,8 @@ export default function Products() {
     setParams(next, { replace: true })
   }
 
-  const filtersActive = Boolean(search) || category !== 'All' || inStockOnly
+  const filtersActive =
+    Boolean(search) || category !== 'All' || inStockOnly || Boolean(maxPrice)
 
   return (
     <div className="page section">
@@ -129,14 +148,45 @@ export default function Products() {
           ))}
         </div>
 
-        <label className="filter-stock">
-          <input
-            type="checkbox"
-            checked={inStockOnly}
-            onChange={(e) => setParam('in_stock', e.target.checked ? '1' : null)}
-          />
-          In stock only
-        </label>
+        <div className="filter-price" role="group" aria-label="Filter by price">
+          {PRICE_BANDS.map((b) => {
+            const active = maxPrice === String(b.max)
+            return (
+              <button
+                key={b.label}
+                className={active ? 'chip chip-active' : 'chip'}
+                aria-pressed={active}
+                onClick={() => setParam('max_price', active ? null : String(b.max))}
+              >
+                {b.label}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="filter-trailing">
+          <label className="filter-stock">
+            <input
+              type="checkbox"
+              checked={inStockOnly}
+              onChange={(e) => setParam('in_stock', e.target.checked ? '1' : null)}
+            />
+            In stock only
+          </label>
+
+          <label className="filter-sort">
+            <span>Sort</span>
+            <select
+              value={sort}
+              onChange={(e) => setParam('sort', e.target.value === 'name' ? null : e.target.value)}
+            >
+              <option value="name">Name (A–Z)</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+              <option value="stock_desc">Best stocked</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <p className="result-count" role="status" aria-live="polite">

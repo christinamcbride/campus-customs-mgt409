@@ -108,3 +108,18 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .chat-product-price { font-size: .82rem; color: var(--ink-muted); }
+
+.chat-starters { margin-top: 4px; }
+.chat-starters-label {
+  font-size: .78rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-subtle); margin: 0 0 8px;
+}
+.chat-starters > div { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.chat-starter {
+  font: inherit; font-size: .86rem; text-align: left; cursor: pointer;
+  padding: 8px 12px; border-radius: var(--radius-md);
+  background: var(--white); color: var(--navy-800);
+  border: 1px solid var(--navy-300);
+  transition: background-color .14s ease, border-color .14s ease;
+}
+.chat-starter:hover { background: var(--navy-100); border-color: var(--navy-700); }

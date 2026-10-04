@@ -911,4 +911,30 @@ having none. Fixed by loading and passing the stored turns.
 
 ---
 
-*Last updated: Problem 8 — customer memory.*
+---
+
+## 15. Usability Improvements (Problem 9)
+
+Written up in full in [`usability.md`](usability.md). Summary of what changed
+in the system:
+
+| Area | Change |
+|---|---|
+| `GET /api/products` | New validated `sort` parameter (`name`, `price_asc`, `price_desc`, `stock_desc`); unknown values 422 |
+| `db.list_products` | `sort` argument, with name as a tie-break so paging is stable across equal prices |
+| Products page | Sort control and three price bands, both reflected in the URL |
+| Chat panel | Context-aware conversation starters, shown only before the first real message |
+| `agent.py` | `@agent.output_validator` rejecting any price not retrieved this turn, via `ModelRetry` |
+| `models.py` | `ProductSummary` / `ProductSummaryDetail` — the compact view the *model* sees |
+| `tools.py` | Tools return summaries; full `ProductCard`s still reach the page through `shown_products` |
+
+The last two are the structurally interesting ones. The price guardrail turns
+a prompt instruction into an enforced invariant, so it keeps holding even if a
+model update makes the agent less obedient. The summary/card split means the
+model and the page have deliberately different views of a product: the model
+gets what it needs to reason, the page gets what it needs to render, and
+neither pays for the other's fields.
+
+---
+
+*Last updated: Problem 9 — usability improvements.*

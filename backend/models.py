@@ -65,6 +65,33 @@ class ProductCardDetail(ProductCard):
     sizes: list[SizeStock]
 
 
+class ProductSummary(BaseModel):
+    """What the *model* sees for a product.
+
+    Deliberately smaller than `ProductCard`. The agent needs enough to talk
+    about an item and to call another tool on it; it does not need
+    `search_tags` (a retrieval mechanism, not shopper-facing) or `image_url`
+    (the page renders that itself). Full cards still go to the frontend via
+    `ShopContext.shown_products`, so nothing is lost on screen.
+    """
+
+    product_id: str
+    name: str
+    category: str
+    price: float
+    colors: list[str]
+    description: str
+    in_stock: bool
+    description_available: bool = True
+
+
+class ProductSummaryDetail(ProductSummary):
+    """One product's summary plus its per-size stock."""
+
+    garment_type: str
+    sizes: list[SizeStock]
+
+
 # --------------------------------------------------------------------------
 # Tool result types
 # --------------------------------------------------------------------------
@@ -77,7 +104,7 @@ class ProductSearchResult(BaseModel):
 
     query: str
     match_count: int
-    matches: list[ProductCard]
+    matches: list[ProductSummary]
     note: str | None = Field(
         default=None,
         description="Set when the search found nothing, explaining what was tried.",

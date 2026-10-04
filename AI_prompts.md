@@ -299,3 +299,25 @@ document the following in `output/harness.md`:
 * how page context is passed to the agent
 ```
 
+---
+
+## Problem 9 — Usability Improvements
+
+**Prompt 1 (initial):**
+
+```
+problem 9: usability improvements now that the core shop works, improve it by choosing and implementing:
+
+* two front-end usability improvements
+* two agent or backend usability improvements
+
+front-end improvements should make the site look better or make it easier to use. agent and backend improvements should make the agent's output better, more accurate, or safer. they could include new agent tools or changes that make the agent run faster or cost less.
+create `output/usability.md` before or while you build the improvements.
+for each improvement, explain:
+
+* what you added
+* why it helps a campus customs shopper or the business
+
+make sure all four improvements actually appear in the running app. the graders will read the write-up and look for the features.
+```
+

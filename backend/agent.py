@@ -12,10 +12,11 @@ pointing ``AI_BASE_URL`` somewhere else is enough to switch backends.
 from __future__ import annotations
 
 import logging
+import re
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic_ai import Agent
+from pydantic_ai import Agent, ModelRetry
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
@@ -26,6 +27,30 @@ from tools import register_tools
 log = logging.getLogger("campus_customs.agent")
 
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "prompt.md"
+
+
+PRICE_PATTERN = re.compile(r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)")
+
+
+def unverified_prices(output: str, retrieved_prices: set[float]) -> set[float]:
+    """Dollar figures in `output` that no retrieved product can account for.
+
+    Sums and differences of retrieved prices are allowed, so legitimate
+    arithmetic ("together that's $156") is not flagged.
+    """
+    quoted = {
+        round(float(m.group(1).replace(",", "")), 2)
+        for m in PRICE_PATTERN.finditer(output)
+    }
+    if not quoted:
+        return set()
+
+    allowed = set(retrieved_prices)
+    for a in retrieved_prices:
+        for b in retrieved_prices:
+            allowed.add(round(a + b, 2))
+            allowed.add(round(abs(a - b), 2))
+    return quoted - allowed
 
 
 class AgentUnavailable(RuntimeError):
@@ -131,6 +156,39 @@ def get_agent() -> Agent[ShopContext, str]:
             "product. Use its product_id when calling a tool about it. Still "
             "call the tools for sizes, stock or anything you need to confirm "
             "— do not answer from these few fields alone."
+        )
+
+    @agent.output_validator
+    def prices_must_come_from_the_database(ctx, output: str) -> str:
+        """Reject a reply quoting a price no tool returned this turn.
+
+        The prompt tells the agent never to invent a price. This enforces it.
+        On a mismatch we raise ModelRetry, which hands the problem back to the
+        model with the real figures so it can correct itself before the
+        shopper ever sees the reply.
+        """
+        retrieved = {round(float(p.price), 2) for p in ctx.deps.shown_products}
+        unverified = unverified_prices(output, retrieved)
+        if not unverified:
+            return output
+
+        log.warning(
+            "Blocked unverified price(s) %s; retrieved were %s",
+            sorted(unverified),
+            sorted(retrieved) or "none",
+        )
+        real = (
+            ", ".join(f"${p:.2f}" for p in sorted(retrieved))
+            if retrieved
+            else "no products were retrieved"
+        )
+        raise ModelRetry(
+            "You quoted "
+            + ", ".join(f"${p:.2f}" for p in sorted(unverified))
+            + ", which did not come from any tool call in this turn. The only "
+            f"prices you actually looked up are: {real}. Either call a tool to "
+            "confirm the price, or rewrite your answer using only prices you "
+            "have retrieved. Never state a price you have not looked up."
         )
 
     register_tools(agent)

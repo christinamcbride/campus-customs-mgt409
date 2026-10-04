@@ -20,6 +20,7 @@ def list_products(
     min_price: float | None = Query(None, ge=0),
     max_price: float | None = Query(None, ge=0),
     in_stock_only: bool = Query(False),
+    sort: str = Query("name", pattern="^(name|price_asc|price_desc|stock_desc)$"),
     limit: int = Query(48, ge=1, le=120),
     offset: int = Query(0, ge=0),
 ) -> ProductPage:
@@ -33,6 +34,7 @@ def list_products(
         min_price=min_price,
         max_price=max_price,
         in_stock_only=in_stock_only,
+        sort=sort,
         limit=limit,
         offset=offset,
     )

@@ -25,6 +25,19 @@ const GREETING: Message = {
 let messageSeq = 0
 const nextId = () => `m${++messageSeq}`
 
+// Shown only before the shopper has asked anything. Phrased as real questions
+// so the first message exercises a tool rather than being small talk.
+const GENERAL_STARTERS = [
+  'What hoodies do you have?',
+  'Show me something under $40',
+  'What fleece jackets are in stock?',
+]
+const PRODUCT_STARTERS = [
+  'What sizes is this in?',
+  'What colours does this come in?',
+  'How many are left?',
+]
+
 /**
  * Very small Markdown renderer for assistant replies.
  *
@@ -216,6 +229,11 @@ export default function ChatWidget() {
     void send(text)
   }
 
+  // Offer openers only until the shopper has actually said something.
+  const hasConversation = messages.some((m) => m.role === 'user')
+  const showStarters = !hasConversation && !pending
+  const starters = pageContext.product_id ? PRODUCT_STARTERS : GENERAL_STARTERS
+
   return (
     <>
       <button
@@ -274,6 +292,26 @@ export default function ChatWidget() {
           {pending && (
             <div className="bubble bubble-assistant typing" aria-label="Assistant is typing">
               <span /><span /><span />
+            </div>
+          )}
+
+          {showStarters && (
+            <div className="chat-starters">
+              <p className="chat-starters-label" id="starters-label">
+                Try asking:
+              </p>
+              <div role="group" aria-labelledby="starters-label">
+                {starters.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="chat-starter"
+                    onClick={() => void send(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

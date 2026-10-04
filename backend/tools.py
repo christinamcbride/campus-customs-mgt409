@@ -18,8 +18,9 @@ from models import (
     InventoryResult,
     LookupFailure,
     ProductCard,
-    ProductCardDetail,
     ProductSearchResult,
+    ProductSummary,
+    ProductSummaryDetail,
     ShopContext,
     SizeStock,
     StockSummary,
@@ -72,6 +73,30 @@ def _clean(row: dict) -> dict:
 
 def _card(row: dict) -> ProductCard:
     return ProductCard(**_clean(row))
+
+
+# Descriptions are one or two sentences; the first is enough for the model to
+# discuss the item, and the page shows the full text anyway.
+SUMMARY_DESCRIPTION_CHARS = 130
+
+
+def _summary(row: dict) -> ProductSummary:
+    """The compact view handed to the model."""
+    data = _clean(row)
+    description = str(data["description"])
+    if len(description) > SUMMARY_DESCRIPTION_CHARS:
+        cut = description[:SUMMARY_DESCRIPTION_CHARS]
+        description = cut[: cut.rfind(" ")] + "…"
+    return ProductSummary(
+        product_id=data["product_id"],
+        name=data["name"],
+        category=data["category"],
+        price=data["price"],
+        colors=data["colors"],
+        description=description,
+        in_stock=bool(data.get("total_stock")),
+        description_available=data.get("description_available", True),
+    )
 
 
 def _sizes(conn, product_id: str) -> list[SizeStock]:
@@ -152,8 +177,10 @@ def register_tools(agent) -> None:
                 if any(w in c.lower() for c in r["colors"] for w in wanted)
             ]
 
-        cards = [_card(r) for r in rows[:MAX_RESULTS]]
-        ctx.deps.remember(cards)
+        page_rows = rows[:MAX_RESULTS]
+        # Full cards go to the page; compact summaries go to the model.
+        ctx.deps.remember([_card(r) for r in page_rows])
+        cards = [_summary(r) for r in page_rows]
         if cards:
             # Label for the results shown on the page. Prefer the shopper's own
             # words; fall back to the filter when they only named a category.
@@ -188,7 +215,7 @@ def register_tools(agent) -> None:
     @agent.tool
     def get_product_details(
         ctx: RunContext[ShopContext], product_id: str
-    ) -> ProductCardDetail | LookupFailure:
+    ) -> ProductSummaryDetail | LookupFailure:
         """Full details for one product, including stock for every size.
 
         Args:
@@ -205,9 +232,12 @@ def register_tools(agent) -> None:
                 product_id=product_id,
             )
         sizes = _sizes(ctx.deps.conn, product_id)
-        detail = ProductCardDetail(**_clean(row), sizes=sizes)
-        ctx.deps.remember([ProductCard(**detail.model_dump(exclude={"sizes"}))])
-        return detail
+        ctx.deps.remember([_card(row)])
+        return ProductSummaryDetail(
+            **_summary(row).model_dump(),
+            garment_type=row["garment_type"],
+            sizes=sizes,
+        )
 
     @agent.tool
     def check_size_availability(

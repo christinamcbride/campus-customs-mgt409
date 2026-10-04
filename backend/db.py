@@ -133,6 +133,7 @@ def list_products(
     min_price: float | None = None,
     max_price: float | None = None,
     in_stock_only: bool = False,
+    sort: str = "name",
     limit: int = 48,
     offset: int = 0,
 ) -> tuple[list[dict[str, Any]], int]:
@@ -181,7 +182,15 @@ def list_products(
         wanted = category.strip().lower()
         products = [p for p in products if p["category"].lower() == wanted]
 
-    products.sort(key=lambda p: p["name"].lower())
+    # Ties are broken by name so paging is stable: without it, the 28 products
+    # that all cost $58 could come back in a different order each request.
+    sorters = {
+        "name": lambda p: (p["name"].lower(),),
+        "price_asc": lambda p: (p["price"], p["name"].lower()),
+        "price_desc": lambda p: (-p["price"], p["name"].lower()),
+        "stock_desc": lambda p: (-(p["total_stock"] or 0), p["name"].lower()),
+    }
+    products.sort(key=sorters.get(sort, sorters["name"]))
     total = len(products)
     return products[offset : offset + limit], total
 

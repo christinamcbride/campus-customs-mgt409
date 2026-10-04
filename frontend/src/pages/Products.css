@@ -33,3 +33,17 @@
 
 .result-count { font-size: .9rem; color: var(--ink-muted); margin-bottom: 18px; }
 .load-more { display: flex; justify-content: center; margin-top: 36px; }
+
+.filter-price { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-trailing { display: flex; align-items: center; gap: 18px; margin-left: auto; flex-wrap: wrap; }
+.filter-sort { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--ink-muted); }
+.filter-sort select {
+  font: inherit; font-size: .88rem; padding: 8px 10px;
+  border: 1px solid var(--cream-200); border-radius: var(--radius-sm);
+  background: var(--white); color: var(--ink); cursor: pointer;
+}
+.filter-sort select:hover { border-color: var(--navy-300); }
+
+@media (max-width: 720px) {
+  .filter-trailing { margin-left: 0; width: 100%; justify-content: space-between; }
+}
