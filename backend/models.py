@@ -137,6 +137,22 @@ class StockSummary(BaseModel):
     sold_out_size_labels: list[str] = Field(default_factory=list)
 
 
+class AccountInfo(BaseModel):
+    """The signed-in shopper's own details.
+
+    Scoped to whoever is chatting: there is no way to ask for another account.
+    Contains no password material of any kind.
+    """
+
+    signed_in: bool
+    first_name: str | None = None
+    last_name: str | None = None
+    full_name: str | None = None
+    email: str | None = None
+    member_since: str | None = None
+    note: str | None = None
+
+
 class LookupFailure(BaseModel):
     """Returned when an identifier does not exist, so the model states it plainly."""
 
@@ -149,8 +165,22 @@ class LookupFailure(BaseModel):
 # --------------------------------------------------------------------------
 
 
+class PageContext(BaseModel):
+    """What the shopper is looking at when they send a message.
+
+    Sent by the frontend so a question like "do you have this in pink?" can be
+    resolved to a specific product. Only the route and a product id are
+    accepted; the backend looks the product up itself rather than trusting any
+    product details the browser might claim.
+    """
+
+    path: str | None = Field(default=None, max_length=300)
+    product_id: str | None = Field(default=None, max_length=200)
+
+
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
+    page_context: PageContext | None = None
 
 
 class ChatMessage(BaseModel):
@@ -193,7 +223,8 @@ class ShopContext:
     """Per-request dependencies handed to the agent and its tools.
 
     Carries the open database connection so tools query the same data the rest
-    of the request sees, and the shopper's first name when they are signed in.
+    of the request sees, who the shopper is when they are signed in, and which
+    product page they are currently on.
 
     `shown_products` is the side channel: tools append the products they
     retrieved, and the chat route returns them to the frontend so the page can
@@ -201,8 +232,20 @@ class ShopContext:
     """
 
     conn: Connection
-    user_first_name: str | None = None
+    # Identity. All of these stay None for a guest.
     user_id: int | None = None
+    user_first_name: str | None = None
+    user_last_name: str | None = None
+    user_full_name: str | None = None
+    user_email: str | None = None
+    member_since: str | None = None
+    # What the shopper is looking at right now, resolved from the database.
+    viewing_product: ProductCard | None = None
+    viewing_path: str | None = None
+
+    @property
+    def is_signed_in(self) -> bool:
+        return self.user_id is not None
 
     def __post_init__(self) -> None:
         self.shown_products: list[ProductCard] = []

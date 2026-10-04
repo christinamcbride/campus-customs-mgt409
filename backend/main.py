@@ -14,6 +14,13 @@ import sqlite3
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    UserPromptPart,
+)
 
 import db
 import routes_auth
@@ -56,6 +63,9 @@ chat_router = APIRouter(prefix="/api/chat", tags=["chat"])
 # Guests get a usable assistant but no stored history, since history is keyed
 # to a user id. Signed-in shoppers get their conversation persisted.
 HISTORY_LIMIT = 20
+# Turns replayed into the model so it remembers the conversation. Kept small
+# so a long history cannot crowd out the system prompt or inflate cost.
+MEMORY_TURNS = 12
 
 
 def _save_message(
@@ -76,6 +86,32 @@ def _save_message(
         ),
     )
     conn.commit()
+
+
+def _load_memory(conn: sqlite3.Connection, user_id: int) -> list[ModelMessage]:
+    """Rebuild recent turns as model messages so the agent remembers them.
+
+    Only the text of each turn is replayed. Stored tool calls and product
+    payloads are not: the agent must re-run its tools against the live
+    database rather than trusting figures captured in an earlier session,
+    where a price or stock level may since have changed.
+    """
+    rows = conn.execute(
+        "SELECT role, content FROM chat_messages WHERE user_id = ? "
+        "ORDER BY id DESC LIMIT ?",
+        (user_id, MEMORY_TURNS),
+    ).fetchall()
+
+    messages: list[ModelMessage] = []
+    for row in reversed(rows):
+        content = row["content"]
+        if not content:
+            continue
+        if row["role"] == "user":
+            messages.append(ModelRequest(parts=[UserPromptPart(content=content)]))
+        else:
+            messages.append(ModelResponse(parts=[TextPart(content=content)]))
+    return messages
 
 
 def _card_from_stored(item: dict) -> ProductCard | None:
@@ -119,14 +155,33 @@ async def chat(
         # A missing key is a configuration problem, not a server crash.
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from None
 
-    deps = ShopContext(
-        conn=conn,
-        user_first_name=(user or {}).get("first_name") or None,
-        user_id=(user or {}).get("id"),
-    )
+    deps = ShopContext(conn=conn)
+    memory: list[ModelMessage] = []
+
+    if user:
+        deps.user_id = user["id"]
+        deps.user_first_name = user.get("first_name") or user["name"].split(" ")[0]
+        deps.user_last_name = user.get("last_name")
+        deps.user_full_name = user["name"]
+        deps.user_email = user["email"]
+        deps.member_since = (user.get("created_at") or "")[:10] or None
+        # Signed-in shoppers get their conversation back; guests do not,
+        # because nothing is stored for them.
+        memory = _load_memory(conn, user["id"])
+
+    # Resolve what they are looking at from our own data, not from the
+    # browser's claims: only the id is taken from the request.
+    if payload.page_context:
+        deps.viewing_path = payload.page_context.path
+        if payload.page_context.product_id:
+            row = db.get_product(conn, payload.page_context.product_id)
+            if row is not None:
+                deps.viewing_product = ProductCard(
+                    **{k: v for k, v in row.items() if k != "image_file_path"}
+                )
 
     try:
-        result = await agent.run(message, deps=deps)
+        result = await agent.run(message, deps=deps, message_history=memory)
     except Exception as exc:
         # Never leak provider errors to the browser: they can echo the request
         # payload and name the upstream provider. Log the detail, return a

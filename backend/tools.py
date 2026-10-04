@@ -14,6 +14,7 @@ from pydantic_ai import RunContext
 
 import db
 from models import (
+    AccountInfo,
     InventoryResult,
     LookupFailure,
     ProductCard,
@@ -313,6 +314,33 @@ def register_tools(agent) -> None:
             products_counted=int(totals["products"]),
             products_with_stock=int(with_stock["n"]),
             products_with_a_sold_out_size=int(with_gap["n"]),
+        )
+
+    @agent.tool
+    def get_my_account(ctx: RunContext[ShopContext]) -> AccountInfo:
+        """The signed-in shopper's own name, email and join date.
+
+        Use this when the shopper asks who you think they are, what email is on
+        their account, or how long they have shopped here. It only ever returns
+        the account of the person currently chatting — there is no way to look
+        up anyone else, and it contains no password information.
+        """
+        deps = ctx.deps
+        if not deps.is_signed_in:
+            return AccountInfo(
+                signed_in=False,
+                note=(
+                    "This shopper is not signed in, so there is no account to "
+                    "read. Tell them they can log in or create an account."
+                ),
+            )
+        return AccountInfo(
+            signed_in=True,
+            first_name=deps.user_first_name,
+            last_name=deps.user_last_name,
+            full_name=deps.user_full_name,
+            email=deps.user_email,
+            member_since=deps.member_since,
         )
 
     @agent.tool

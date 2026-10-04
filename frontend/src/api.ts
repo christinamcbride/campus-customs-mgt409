@@ -2,6 +2,7 @@ import type {
   CategoryList,
   ChatHistoryMessage,
   ChatReply,
+  PageContext,
   ProductDetail,
   ProductPage,
   RegisterInput,
@@ -136,11 +137,15 @@ export function fetchMe(signal?: AbortSignal) {
 
 // ---- Shopping assistant ----
 
-export function sendChatMessage(message: string, signal?: AbortSignal) {
+export function sendChatMessage(
+  message: string,
+  pageContext?: PageContext,
+  signal?: AbortSignal,
+) {
   return request<ChatReply>('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, page_context: pageContext ?? null }),
     signal,
   })
 }

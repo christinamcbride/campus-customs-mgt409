@@ -79,15 +79,58 @@ def get_agent() -> Agent[ShopContext, str]:
 
     @agent.instructions
     def shopper_context(ctx) -> str:
-        """Per-request facts appended to the static prompt."""
-        if ctx.deps.user_first_name:
+        """Who is chatting. Rebuilt per request, never baked into the prompt."""
+        deps = ctx.deps
+        if not deps.is_signed_in:
             return (
-                f"The shopper is signed in and their first name is "
-                f"{ctx.deps.user_first_name}. You know nothing else about them."
+                "The shopper is NOT signed in. You do not know their name or "
+                "email, and no chat history is kept for them. Do not ask them "
+                "to log in unless they raise it; just help them shop."
             )
+        lines = [
+            "The shopper is signed in. Their account details:",
+            f"- Name: {deps.user_full_name}",
+            f"- First name: {deps.user_first_name}",
+            f"- Email: {deps.user_email}",
+        ]
+        if deps.member_since:
+            lines.append(f"- Customer since: {deps.member_since}")
+        lines.append(
+            "Greet them by first name when it fits naturally. You know nothing "
+            "else about them: do not guess their size, budget, affiliation or "
+            "past purchases. Never repeat their email back unless they ask for "
+            "it, and never discuss passwords or account security."
+        )
+        return "\n".join(lines)
+
+    @agent.instructions
+    def page_context(ctx) -> str:
+        """What the shopper is looking at, so 'this' resolves to a product."""
+        product = ctx.deps.viewing_product
+        if product is None:
+            if ctx.deps.viewing_path and ctx.deps.viewing_path != "/":
+                return (
+                    f"The shopper is on the page {ctx.deps.viewing_path}. They "
+                    "are not viewing a specific product, so if they say "
+                    '"this" or "it" without naming an item, ask which product '
+                    "they mean."
+                )
+            return (
+                "The shopper is browsing the site but not viewing a specific "
+                'product. If they say "this" or "it" without naming an item, '
+                "ask which product they mean rather than guessing."
+            )
+        colors = ", ".join(product.colors) if product.colors else "not recorded"
         return (
-            "The shopper is not signed in, so you do not know their name. Do "
-            "not ask for it; just help them shop."
+            "The shopper is currently viewing this product page:\n"
+            f"- product_id: {product.product_id}\n"
+            f"- Name: {product.name}\n"
+            f"- Price: ${product.price:.2f}\n"
+            f"- Colours on file: {colors}\n"
+            'Treat "this", "it", "this one" and similar as referring to this '
+            "product. Use its product_id when calling a tool about it. Still "
+            "call the tools for sizes, stock or anything you need to confirm "
+            "— do not answer from these few fields alone."
         )
 
     register_tools(agent)

@@ -282,3 +282,20 @@ this should work as an api contract: the agent returns structured product matche
 make sure the single-item page from problem 3 still works after adding the dynamic product cards. every product card, including cards added to the page through chat, should open the product's detail view when clicked. the detail view should include the large product image and full product information. update `prompts/prompt.md` and `output/harness.md` so it is clear how search results move from the agent to the frontend and appear on the page.
 ```
 
+---
+
+## Problem 8 — Customer Memory
+
+**Prompt 1 (initial):**
+
+```
+problem 8: customer memory when a shopper is logged in, save their chat history in an appropriate database table and reload it when they return.
+the agent should know who is chatting, including the customer's name and email. pass this information through the agent dependencies or another clear method, and make it available through tools if needed.
+also pass enough page context to the agent so it can understand which product the shopper is viewing. for example, if someone is on a product page and asks, "do you have this in pink?", the agent should know which product they mean. you can add this information to the agent context. guests can still chat, but chat history only needs to be saved for logged-in users.
+document the following in `output/harness.md`:
+
+* how user chat history is stored
+* which customer fields the agent can see
+* how page context is passed to the agent
+```
+

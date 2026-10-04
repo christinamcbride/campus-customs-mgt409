@@ -64,3 +64,8 @@ export interface ChatHistoryMessage {
   products: Product[]
   created_at: string
 }
+
+export interface PageContext {
+  path: string | null
+  product_id: string | null
+}

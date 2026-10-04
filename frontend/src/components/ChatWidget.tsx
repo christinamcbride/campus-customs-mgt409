@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { ApiError, fetchChatHistory, formatPrice, sendChatMessage } from '../api'
 import { useAuth } from '../auth'
 import { useChatResults } from '../chatResults'
-import type { Product } from '../types'
+import type { PageContext, Product } from '../types'
 import './ChatWidget.css'
 
 interface Message {
@@ -94,6 +94,18 @@ function ProductStrip({ products }: { products: Product[] }) {
 export default function ChatWidget() {
   const { user } = useAuth()
   const { publish } = useChatResults()
+  const location = useLocation()
+
+  // What the shopper is looking at, so "do you have this in pink?" resolves.
+  // Only the route and the id are sent; the backend looks the product up
+  // itself rather than trusting anything the page claims about it.
+  const pageContext = useMemo<PageContext>(() => {
+    const match = location.pathname.match(/^\/products\/(.+)$/)
+    return {
+      path: location.pathname,
+      product_id: match ? decodeURIComponent(match[1]) : null,
+    }
+  }, [location.pathname])
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<Message[]>([GREETING])
@@ -164,7 +176,7 @@ export default function ChatWidget() {
       setMessages((m) => [...m, { id: nextId(), role: 'user', content: text }])
       setPending(true)
       try {
-        const res = await sendChatMessage(text)
+        const res = await sendChatMessage(text, pageContext)
         // Hand the matches to the page so they render as full product cards.
         publish(res.products, res.matched_for)
         setMessages((m) => [
@@ -193,7 +205,7 @@ export default function ChatWidget() {
         setPending(false)
       }
     },
-    [publish],
+    [publish, pageContext],
   )
 
   function submit(e: React.FormEvent) {

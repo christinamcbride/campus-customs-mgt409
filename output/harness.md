@@ -787,4 +787,128 @@ so honest "we don't carry that" answers still happen.
 
 ---
 
-*Last updated: Problem 7 — chat search that updates the page.*
+---
+
+## 14. Customer Memory (Problem 8)
+
+### How chat history is stored
+
+In the **`chat_messages`** table that ships with the database — one row per
+turn, no new tables added.
+
+| Column | What goes in it |
+|---|---|
+| `user_id` | FK to `users`. Scopes history to one account. |
+| `role` | `user` or `assistant` |
+| `content` | The message text |
+| `products_json` | The product cards shown with an assistant turn |
+| `created_at` | Defaulted timestamp, used for ordering |
+
+**Writes.** After a successful reply, `/api/chat` inserts both turns — the
+shopper's message and the assistant's, the latter with its cards serialised
+into `products_json`. Nothing is written for guests, since the column is
+`NOT NULL` and keyed to a user.
+
+**Two separate reads, for two different purposes:**
+
+1. **Rebuilding the conversation for the agent** — `_load_memory()` takes the
+   last **12** turns and converts them into PydanticAI `ModelRequest` /
+   `ModelResponse` messages, passed as `message_history=` to `agent.run()`.
+   Only the **text** is replayed. Stored tool calls and product payloads are
+   deliberately *not* replayed: the agent must re-run its tools against the
+   live database rather than trusting a price or stock level captured in an
+   earlier session, which may since have changed.
+2. **Repainting the panel for the shopper** — `GET /api/chat/history` returns
+   the last **20** turns with their product cards, so reopening the chat shows
+   the conversation exactly as it looked, cards included.
+
+**Guests** can chat normally but get no persistence and no cross-turn memory.
+Asked about an earlier message, the assistant says it has none rather than
+inventing one. The page-context mechanism below still works for them, which is
+what makes "do you have this in pink?" answerable without an account.
+
+### Which customer fields the agent can see
+
+Identity travels in the **agent dependencies** (`ShopContext`), built per
+request from the session cookie — never from anything the browser asserts.
+
+| Field | Source | Why the agent gets it |
+|---|---|---|
+| `user_id` | session cookie | Scopes history; never spoken aloud |
+| `user_first_name` | `users.first_name` | Greeting by name |
+| `user_last_name` | `users.last_name` | Completes the full name |
+| `user_full_name` | `users.name` | "You're signed in as Test User" |
+| `user_email` | `users.email` | Confirming which account they are on |
+| `member_since` | `users.created_at`, date only | "Customer since 2026-09-19" |
+
+**`password_hash` is never loaded into `ShopContext`** and is never reachable
+from any tool. The prompt separately forbids discussing credentials.
+
+Two routes make this available to the model:
+
+- **Instructions** — an `@agent.instructions` function injects the signed-in
+  shopper's details per request, so they are never baked into the cached
+  agent. For a guest it states plainly that nothing is known about them.
+- **A tool** — `get_my_account` returns an `AccountInfo` with the same fields,
+  for when the shopper asks directly. It only ever reads the account of the
+  person currently chatting; there is no parameter for looking anyone else up,
+  and it contains no password material.
+
+The instructions also tell the agent it knows *nothing else*: not size, budget,
+affiliation or past purchases, and that it must not repeat the email back
+unprompted.
+
+### How page context is passed to the agent
+
+`POST /api/chat` accepts an optional `page_context`:
+
+```jsonc
+{
+  "message": "do you have this in pink?",
+  "page_context": {
+    "path": "/products/baseball-left-chest-crewneck",
+    "product_id": "baseball-left-chest-crewneck"
+  }
+}
+```
+
+The frontend derives it in `ChatWidget` from the current route
+(`useLocation()`), matching `/products/:id` to pull the id. Every message
+carries it, so context is always current.
+
+**Only the route and the id are accepted.** The backend looks the product up in
+the database itself and puts the resulting `ProductCard` on
+`ShopContext.viewing_product`. Nothing the browser claims about a product's
+name, price or colours is trusted — a page could otherwise assert a false price
+and have the agent repeat it.
+
+A second `@agent.instructions` function turns that into guidance: on a product
+page it names the id, title, price and colours and says to read "this", "it"
+and "this one" as that product — while still requiring tool calls for sizes and
+stock. Off a product page it tells the agent to **ask which product they mean**
+rather than guess.
+
+### Verified
+
+| Scenario | Result |
+|---|---|
+| On a product page, guest: "do you have this in pink?" | "No—this crewneck comes in **navy** and **white**, not pink." Correct per the row. |
+| Same question, no page context | "Which product do you mean? Send me the name or a link…" |
+| Signed in: "what's my name and email?" | "Test User", `test@campuscustoms.yale.edu` |
+| Cross-turn recall in one session | Quoted the first question back correctly |
+| **Returning in a brand-new session** | "Welcome back, Test. We were talking about finding a **navy crewneck for your brother**." |
+| Guest: "what did I ask earlier?" | "I don't have any earlier messages from you in this chat." |
+| Reopening the panel after signing in | 9 turns restored with 8 product cards intact |
+| `GET /api/chat/history` as a guest | `[]` |
+
+### Gap this problem closed
+
+`agent.run()` was being called with **no `message_history` at all**. History was
+being written to the database and replayed into the chat panel for the shopper
+to read, but the model never saw it — so the assistant could not refer to
+anything said a moment earlier. It looked like memory from the outside while
+having none. Fixed by loading and passing the stored turns.
+
+---
+
+*Last updated: Problem 8 — customer memory.*
